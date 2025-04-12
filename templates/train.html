@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train Models - ML Intrusion Detection Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        .model-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .model-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        .model-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .model-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .model-card h3 {
+            margin-bottom: 0.8rem;
+            text-align: center;
+        }
+        
+        .model-description {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--gray-color);
+            font-size: 0.9rem;
+        }
+        
+        .model-checkbox {
+            display: flex;
+            align-items: center;
+            margin-top: auto;
+        }
+        
+        .model-checkbox input[type="checkbox"] {
+            margin-right: 0.5rem;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+        
+        .model-checkbox label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .model-actions {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .select-buttons {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .training-progress {
+            display: none;
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            background-color: var(--light-color);
+            border-radius: 4px;
+            height: 20px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .models-divider {
+            border-top: 1px dashed var(--border-color);
+            margin: 2rem 0;
+            padding-top: 1rem;
+        }
+        
+        .model-section-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .model-note {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .model-note i {
+            margin-right: 10px;
+        }
+        
+        .model-card.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        /* Flash Messages */
+        .flashes {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .flashes li {
+            padding: 0.8rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .flashes li.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .flashes li.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .flashes li.info {
+            background-color: rgba(23, 162, 184, 0.1);
+            color: var(--info-color);
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .flashes li.warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>ML Intrusion Detection System</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="/train" class="active"><i class="fas fa-brain"></i> Train</a></li>
+                    <li><a href="/manual_entry"><i class="fas fa-edit"></i> Manual Entry</a></li>
+                    <li><a href="/capture"><i class="fas fa-network-wired"></i> Live Capture</a></li>
+                    <li><a href="/results"><i class="fas fa-chart-line"></i> Results</a></li>
+                    <li><a href="#" id="help-link"><i class="fas fa-question-circle"></i> Help</a></li>
+                    {% if logged_in %}
+                    <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    {% else %}
+                    <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
+
+        <main class="content">
+            <div class="summary-section">
+                <h2>Train Machine Learning Models</h2>
+                <p>Select the models you'd like to train on your dataset. Training may take several minutes depending on the size of your dataset and the models selected.</p>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <ul class="flashes">
+                            {% for category, message in messages %}
+                                <li class="{{ category }}">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Hidden field to let JavaScript know if the data has labels -->
+                <input type="hidden" id="has-labels" value="{{ 'true' if has_labels else 'false' }}">
+                
+                <form id="training-form" action="/train" method="POST">
+                    <div class="select-buttons">
+                        <button type="button" id="select-all" class="btn-secondary">Select All</button>
+                        <button type="button" id="select-supervised" class="btn-secondary">Supervised Only</button>
+                        <button type="button" id="select-unsupervised" class="btn-secondary">Unsupervised Only</button>
+                        <button type="button" id="clear-all" class="btn-secondary">Clear All</button>
+                    </div>
+                    
+                    <div class="model-section-title">
+                        <h3><i class="fas fa-tag"></i> Supervised Learning Models</h3>
+                        <p>These models require labeled data (with a "class" column) to learn patterns of normal vs. anomalous traffic.</p>
+                    </div>
+                    
+                    <div class="model-selection-grid supervised-models">
+                        <!-- Supervised Models -->
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-chart-line"></i></div>
+                            <h3>Logistic Regression</h3>
+                            <p class="model-description">A statistical model that uses a logistic function to model binary outcomes.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="logistic" value="Logistic_Regression">
+                                <label for="logistic">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-project-diagram"></i></div>
+                            <h3>KNN Classifier</h3>
+                            <p class="model-description">Classifies based on the majority class of K nearest neighbors.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="knn" value="KNeighbors_Classifier">
+                                <label for="knn">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-tree"></i></div>
+                            <h3>Random Forest</h3>
+                            <p class="model-description">Ensemble learning method using multiple decision trees.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="rf" value="RandomForest_Classifier">
+                                <label for="rf">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-vector-square"></i></div>
+                            <h3>SVM Classifier</h3>
+                            <p class="model-description">Finds the hyperplane that best divides data into classes.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="svm" value="SVM_Classifier">
+                                <label for="svm">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-network-wired"></i></div>
+                            <h3>Neural Network</h3>
+                            <p class="model-description">Deep learning model inspired by the human brain's structure.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="nn" value="Neural_Network">
+                                <label for="nn">Train this model</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="models-divider"></div>
+                    
+                    <div class="model-section-title">
+                        <h3><i class="fas fa-search"></i> Unsupervised Learning Models</h3>
+                        <p>These models can detect anomalies without labeled data by identifying patterns that deviate from the norm.</p>
+                    </div>
+                    
+                    <div class="model-selection-grid unsupervised-models">
+                        <!-- Unsupervised Models -->
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-object-group"></i></div>
+                            <h3>K-Means Clustering</h3>
+                            <p class="model-description">Groups similar data points together and identifies outliers.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="kmeans" value="KMeans">
+                                <label for="kmeans">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-tree"></i></div>
+                            <h3>Isolation Forest</h3>
+                            <p class="model-description">Isolates anomalies by random partitioning of the feature space.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="iforest" value="IsolationForest">
+                                <label for="iforest">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-map-marker-alt"></i></div>
+                            <h3>Local Outlier Factor</h3>
+                            <p class="model-description">Identifies anomalies by measuring local deviation of density.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="lof" value="LOF">
+                                <label for="lof">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-expand-arrows-alt"></i></div>
+                            <h3>One-Class SVM</h3>
+                            <p class="model-description">Learns a boundary around normal data to identify outliers.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="ocsvm" value="OneClassSVM">
+                                <label for="ocsvm">Train this model</label>
+                            </div>
+                        </div>
+                        
+                        <div class="model-card">
+                            <div class="model-icon"><i class="fas fa-braille"></i></div>
+                            <h3>DBSCAN</h3>
+                            <p class="model-description">Density-based clustering that identifies outliers as noise.</p>
+                            <div class="model-checkbox">
+                                <input type="checkbox" name="models" id="dbscan" value="DBSCAN">
+                                <label for="dbscan">Train this model</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-actions">
+                        <button type="submit" id="train-button" class="btn-primary">
+                            <i class="fas fa-play"></i> Train Selected Models
+                        </button>
+                    </div>
+                    
+                    <div class="training-progress" id="training-progress">
+                        <h3>Training in Progress</h3>
+                        <p>Please wait while the selected models are being trained...</p>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                        </div>
+                        <p id="progress-text">Initializing...</p>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 ML Intrusion Detection System</p>
+        </footer>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Model Training Help</h2>
+            <h3>Supervised vs. Unsupervised Models</h3>
+            <p><strong>Supervised models</strong> require labeled data (with a "class" column) to learn patterns. They're good for classifying known attack types.</p>
+            <p><strong>Unsupervised models</strong> can detect anomalies without labels by identifying patterns that deviate from the norm. They can detect novel attacks.</p>
+            
+            <h3>Choosing Models</h3>
+            <ul>
+                <li><strong>For general anomaly detection:</strong> Start with Isolation Forest and Local Outlier Factor</li>
+                <li><strong>For classifying known attack types:</strong> Random Forest and Neural Network</li>
+                <li><strong>For low computational resources:</strong> Logistic Regression and K-Means</li>
+            </ul>
+            
+            <h3>Training Time</h3>
+            <p>Training time depends on your dataset size and the selected models. Neural Networks and SVMs typically take longer to train than other models.</p>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/train.js"></script>
+</body>
+</html>

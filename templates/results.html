@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - ML Intrusion Detection Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add the enhanced style CSS -->
+    <link rel="stylesheet" href="/static/css/enhanced-style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>ML Intrusion Detection System</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="/train"><i class="fas fa-brain"></i> Train</a></li>
+                    <li><a href="/manual_entry"><i class="fas fa-edit"></i> Manual Entry</a></li>
+                    <li><a href="/capture"><i class="fas fa-network-wired"></i> Live Capture</a></li>
+                    <li><a href="/results" class="active"><i class="fas fa-chart-line"></i> Results</a></li>
+                    <li><a href="#" id="help-link"><i class="fas fa-question-circle"></i> Help</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="content">
+            <div class="results-container">
+                <!-- Dashboard Summary -->
+                <div class="summary-section">
+                    <h2>Analysis Results</h2>
+                
+                    <!-- Network Anomaly Result -->
+                    <div class="prediction-container">
+                        <h2>Network Analysis Result</h2>
+                        <p class="prediction-text">{{ prediction_text }}</p>
+                        
+                        {% if threat_types and threat_types|length > 0 %}
+                        <div class="threat-types">
+                            <h3>Detected Threat Types:</h3>
+                            <div class="threat-badges">
+                                {% for threat in threat_types %}
+                                <span class="threat-badge">{{ threat }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="summary-info">
+                                <h3>Best Model</h3>
+                                <p id="best-model">{{ selected_model }}</p>
+                                <p id="best-model-accuracy">
+                                    {% if model_results and selected_model in model_results and 'accuracy' in model_results[selected_model] %}
+                                        Accuracy: {{ "%.2f"|format(model_results[selected_model].accuracy * 100) }}%
+                                    {% elif model_results and selected_model in model_results and 'anomaly_percentage' in model_results[selected_model] %}
+                                        Anomaly %: {{ "%.2f"|format(model_results[selected_model].anomaly_percentage) }}%
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon"><i class="fas fa-table"></i></div>
+                            <div class="summary-info">
+                                <h3>Data Sample</h3>
+                                <p id="data-rows">{{ total_records }} records analyzed (showing {{ sample_data|length }} sample records)</p>
+                                <button id="view-data-btn" class="btn-secondary">View Data</button>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon"><i class="fas fa-file-download"></i></div>
+                            <div class="summary-info">
+                                <h3>Export</h3>
+                                <div class="export-buttons">
+                                    <button id="export-pdf-btn" class="export-btn">
+                                        <i class="fas fa-file-pdf"></i> PDF Report
+                                    </button>
+                                    <button id="export-csv-btn" class="export-btn">
+                                        <i class="fas fa-file-csv"></i> CSV Results
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Special sections for manual entry or capture results -->
+                {% if source == 'manual' and manual_result %}
+                <div class="summary-section">
+                    <h3><i class="fas fa-edit"></i> Manual Entry Analysis</h3>
+                    <p>Results from manual network traffic entry analysis:</p>
+                    
+                    <div class="result-details">
+                        <div class="detail-card">
+                            <h3><i class="fas fa-chart-line"></i> Analysis Details</h3>
+                            <div class="detail-item">
+                                <span class="detail-label">Detection Model:</span>
+                                <span class="detail-value">{{ manual_result.model }}</span>
+                            </div>
+                            {% if manual_result.anomaly_count %}
+                            <div class="detail-item">
+                                <span class="detail-label">Anomaly Count:</span>
+                                <span class="detail-value">{{ manual_result.anomaly_count }}</span>
+                            </div>
+                            {% endif %}
+                            {% if manual_result.anomaly_percentage %}
+                            <div class="detail-item">
+                                <span class="detail-label">Anomaly Percentage:</span>
+                                <span class="detail-value">{{ "%.2f"|format(manual_result.anomaly_percentage) }}%</span>
+                            </div>
+                            {% endif %}
+                            {% if manual_result.threat_type %}
+                            <div class="detail-item">
+                                <span class="detail-label">Threat Type:</span>
+                                <span class="detail-value">{{ manual_result.threat_type }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if source == 'capture' and capture_model %}
+                <div class="summary-section">
+                    <h3><i class="fas fa-network-wired"></i> Network Capture Analysis</h3>
+                    <p>Results from live network packet capture analysis:</p>
+                    
+                    <div class="result-details">
+                        <div class="detail-card">
+                            <h3><i class="fas fa-chart-line"></i> Analysis Details</h3>
+                            <div class="detail-item">
+                                <span class="detail-label">Detection Model:</span>
+                                <span class="detail-value">{{ capture_model }}</span>
+                            </div>
+                            {% if model_results and capture_model in model_results %}
+                                {% if 'anomaly_count' in model_results[capture_model] %}
+                                <div class="detail-item">
+                                    <span class="detail-label">Anomaly Count:</span>
+                                    <span class="detail-value">{{ model_results[capture_model].anomaly_count }}</span>
+                                </div>
+                                {% endif %}
+                                {% if 'anomaly_percentage' in model_results[capture_model] %}
+                                <div class="detail-item">
+                                    <span class="detail-label">Anomaly Percentage:</span>
+                                    <span class="detail-value">{{ "%.2f"|format(model_results[capture_model].anomaly_percentage) }}%</span>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Main Dashboard Tabs -->
+                <div class="dashboard-tabs">
+                    <div class="tab-header">
+                        <button class="tab-btn active" data-tab="comparison">Model Comparison</button>
+                        <button class="tab-btn" data-tab="individual">Individual Models</button>
+                        <button class="tab-btn" data-tab="data">Data Analysis</button>
+                        {% if anomaly_data and anomaly_data|length > 0 %}
+                        <button class="tab-btn" data-tab="anomalies">Anomalies</button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Model Comparison Tab -->
+                    <div class="tab-content active" id="comparison-tab">
+                        <div class="chart-container">
+                            <div class="chart-card">
+                                <h3>Model Performance Comparison</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="performance-chart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>ROC-AUC Comparison</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="roc-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <h3>Comparison Table</h3>
+                            <div class="table-wrapper">
+                                <table id="comparison-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Model</th>
+                                            <th>Accuracy</th>
+                                            <th>Precision</th>
+                                            <th>Recall</th>
+                                            <th>F1 Score</th>
+                                            <th>ROC-AUC</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Will be filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Models Tab -->
+                    <div class="tab-content" id="individual-tab">
+                        <div class="model-selector">
+                            <label for="model-select">Select Model:</label>
+                            <select id="model-select">
+                                {% for model in model_results %}
+                                <option value="{{ model }}" {% if model == selected_model %}selected{% endif %}>{{ model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="model-details">
+                            <div class="chart-card">
+                                <h3 id="model-detail-title">{{ selected_model }} Metrics</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="individual-metrics-chart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Confusion Matrix</h3>
+                                <div class="confusion-matrix">
+                                    <div class="matrix-cell top-left">
+                                        <span class="matrix-label">True Negative</span>
+                                        <span id="tn-value" class="matrix-value">-</span>
+                                    </div>
+                                    <div class="matrix-cell top-right">
+                                        <span class="matrix-label">False Positive</span>
+                                        <span id="fp-value" class="matrix-value">-</span>
+                                    </div>
+                                    <div class="matrix-cell bottom-left">
+                                        <span class="matrix-label">False Negative</span>
+                                        <span id="fn-value" class="matrix-value">-</span>
+                                    </div>
+                                    <div class="matrix-cell bottom-right">
+                                        <span class="matrix-label">True Positive</span>
+                                        <span id="tp-value" class="matrix-value">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Analysis Tab -->
+                    <div class="tab-content" id="data-tab">
+                        <div class="data-overview-section">
+                            <div class="chart-card">
+                                <h3>Class Distribution</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="class-distribution-chart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Feature Importance</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="feature-importance-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <h3>Data Sample</h3>
+                            <div class="table-controls">
+                                <button id="prev-page" class="btn-secondary"><i class="fas fa-chevron-left"></i></button>
+                                <span id="page-info">Page 1 of 10</span>
+                                <button id="next-page" class="btn-secondary"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table id="data-sample-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <!-- Will be filled by JavaScript -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Will be filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Anomalies Tab -->
+                    {% if anomaly_data and anomaly_data|length > 0 %}
+                    <div class="tab-content" id="anomalies-tab">
+                        <h3>Top Detected Anomalies</h3>
+                        <p>The following anomalies were detected by unsupervised learning models:</p>
+                        
+                        <div class="model-selector">
+                            <label for="anomaly-model-select">Select Model:</label>
+                            <select id="anomaly-model-select">
+                                {% for model in anomaly_data %}
+                                <option value="{{ model }}">{{ model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div id="anomaly-tables">
+                            {% for model, anomalies in anomaly_data.items() %}
+                            <div id="anomaly-table-{{ model }}" class="anomaly-table" style="display: none;">
+                                <h4>Top Anomalies - {{ model }}</h4>
+                                <div class="table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                {% for key in anomalies[0].keys() %}
+                                                <th>{{ key }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for anomaly in anomalies %}
+                                            <tr>
+                                                {% for key, value in anomaly.items() %}
+                                                <td>
+                                                    {% if key == 'threat_type' %}
+                                                    <span class="threat-badge">{{ value }}</span>
+                                                    {% elif key == 'is_anomaly' or key == 'class' %}
+                                                    <span class="class-badge {% if value == 0 or value == 'normal' %}normal{% else %}attack{% endif %}">
+                                                        {% if value == 0 or value == 'normal' %}Normal{% else %}Anomaly{% endif %}
+                                                    </span>
+                                                    {% elif value is number and not value is integer %}
+                                                    {{ "%.4f"|format(value) }}
+                                                    {% else %}
+                                                    {{ value }}
+                                                    {% endif %}
+                                                </td>
+                                                {% endfor %}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Data Modal -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close">&times;</span>
+            <h2>Complete Dataset</h2>
+            <div class="data-filter">
+                <input type="text" id="data-search" placeholder="Search data...">
+                <select id="class-filter">
+                    <option value="all">All Classes</option>
+                    <option value="normal">Normal</option>
+                    <option value="attack">Anomaly</option>
+                </select>
+            </div>
+            <div class="table-wrapper large-table">
+                <table id="full-data-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <!-- Will be filled by JavaScript -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Will be filled by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-pagination" id="modal-pagination">
+                <button id="modal-prev-page" class="btn-secondary"><i class="fas fa-chevron-left"></i></button>
+                <span id="modal-page-info">Page 1 of 1</span>
+                <button id="modal-next-page" class="btn-secondary"><i class="fas fa-chevron-right"></i></button>
+                <button id="show-all-btn" class="btn-primary">Show All Records</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Results Page Help</h2>
+            <h3>Model Comparison Tab</h3>
+            <p>Compare the performance of all models using various metrics like accuracy, precision, recall, F1-score, and ROC-AUC.</p>
+            
+            <h3>Individual Models Tab</h3>
+            <p>Examine detailed performance metrics for each model, including confusion matrices and individual metric breakdowns.</p>
+            
+            <h3>Data Analysis Tab</h3>
+            <p>Explore your dataset with visualizations of class distribution, feature importance, and raw data samples.</p>
+            
+            <h3>Anomalies Tab</h3>
+            <p>View the top anomalies detected by each unsupervised learning model, including their classification and threat type.</p>
+            
+            <h3>Export Options</h3>
+            <p>Download complete analysis reports as PDF or raw results as CSV files for further analysis.</p>
+        </div>
+    </div>
+    <div class="ml-explanation">
+        <h2>📊 Understanding ML Metrics</h2>
+        <p>This guide helps you understand the machine learning metrics used in this dashboard, even if you're not familiar with AI terminology.</p>
+    
+        <h3>Accuracy</h3>
+        <p>Accuracy measures how often the model makes correct predictions (both normal traffic and attacks). Higher accuracy (close to 100%) means better overall performance.</p>
+    
+        <h3>Precision</h3>
+        <p>Precision tells you how reliable the attack alerts are. It answers: "When the model flags something as an attack, how often is it really an attack?" Higher precision means fewer false alarms.</p>
+    
+        <h3>Recall</h3>
+        <p>Recall shows how well the model catches actual attacks. It answers: "Out of all the real attacks, how many did the model successfully catch?" Higher recall means fewer missed attacks.</p>
+    
+        <h3>F1 Score</h3>
+        <p>F1 Score balances Precision and Recall in a single metric. It's especially useful when you need both few false alarms AND few missed attacks.</p>
+    
+        <h3>ROC-AUC Score</h3>
+        <p>ROC-AUC measures how well the model distinguishes between normal traffic and attacks across different thresholds. A score close to 1.0 (100%) indicates an excellent model.</p>
+    
+        <h2>Understanding the Confusion Matrix</h2>
+    
+        <h3>✅ True Positives (TP)</h3>
+        <p>Correctly identified attacks - The model said "attack" and it was an attack.</p>
+    
+        <h3>✅ True Negatives (TN)</h3>
+        <p>Correctly identified normal traffic - The model said "normal" and it was normal.</p>
+    
+        <h3>❌ False Positives (FP)</h3>
+        <p>False alarms - The model said "attack" but it was actually normal traffic.</p>
+    
+        <h3>❌ False Negatives (FN)</h3>
+        <p>Missed attacks - The model said "normal" but it was actually an attack.</p>
+    </div>
+    
+    <!-- Pass data to JavaScript -->
+    <script>
+        // Make model results available to JavaScript
+        const modelResultsData = {{ model_results|tojson }};
+        const selectedModel = "{{ selected_model }}";
+        const source = "{{ source }}";
+        
+        // Full data for the data viewer
+        const fullData = {{ full_data|tojson }};
+    </script>
+
+    <!-- Load JavaScript files -->
+    <script src="/static/js/data-viewer.js"></script>
+    <script src="/static/js/results.js"></script>
+    <!-- Force chart initialization on page load -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Force redraw charts after a short delay to ensure everything is loaded
+        setTimeout(function() {
+            // Get all chart canvases and set explicit height
+            const chartCanvases = document.querySelectorAll('canvas');
+            chartCanvases.forEach(canvas => {
+                canvas.style.height = '300px';
+                canvas.height = 300;
+            });
+            
+            // Manually click the first tab to initialize it
+            const firstTab = document.querySelector('.tab-btn');
+            if (firstTab) {
+                firstTab.click();
+            }
+            
+            console.log('Charts forced to initialize');
+        }, 500);
+    });
+    </script>
+    <script src="/static/js/pdf-export.js"></script>
+    <script src="/static/js/data-display-fix.js"></script>
+    <script src="/static/js/integration-script.js"></script>
+    <script src="/static/js/unsupervised-metrics.js"></script>
+    <script src="/static/js/integration-fix.js"></script>
+    <footer>
+        <p>&copy; 2025 ML Intrusion Detection System</p>
+    </footer>
+
+</body>
+</html>

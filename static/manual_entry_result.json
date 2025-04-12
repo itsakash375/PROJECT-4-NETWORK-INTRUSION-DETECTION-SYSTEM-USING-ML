@@ -1,0 +1,8 @@
+{
+    "model": "IsolationForest",
+    "anomaly_count": 0,
+    "anomaly_percentage": 0.0,
+    "accuracy": null,
+    "sample_size": 1,
+    "threat_type": "DoS Attack - HTTP Flood"
+}

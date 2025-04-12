@@ -1,0 +1,31 @@
+# Core dependencies
+Flask
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+
+# Neural network dependencies
+tensorflow
+keras
+
+# PDF Generation
+Jinja2
+
+# Data processing and visualization
+pdfkit
+reportlab
+
+# Networking and packet capture
+scapy
+
+# Other utilities
+requests
+python-dateutil
+pytz
+
+# For development and testing
+pytest
+black
+flake8

@@ -1,0 +1,11 @@
+duration,src_bytes,dst_bytes,logged_in,count,srv_count,serror_rate,srv_serror_rate,rerror_rate,srv_rerror_rate,same_srv_rate,diff_srv_rate,dst_host_count,dst_host_srv_count,dst_host_same_srv_rate,dst_host_diff_srv_rate,dst_host_same_src_port_rate,dst_host_srv_diff_host_rate,dst_host_serror_rate,dst_host_srv_serror_rate,dst_host_rerror_rate,dst_host_srv_rerror_rate,class,anomaly_score,threat_type
+0,0,467968,0,1,1,0.0,0.0,0.0,0.0,1.0,0.0,2,2,1.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,anomaly,102.16200399932839,Unusual Traffic - High Volume Transfer
+35682,381709090,0,0,1,1,0.0,0.0,1.0,1.0,1.0,0.0,78,2,0.03,0.12,0.08,0.0,0.0,0.0,0.08,0.5,anomaly,73.71295652405372,Data Exfiltration - Large Upload
+0,0,0,0,511,1,0.0,0.0,0.0,1.0,0.0,0.0,239,201,0.84,0.01,0.0,0.0,0.0,0.0,0.84,1.0,normal,34.52578763049429,DoS Attack - TCP Connection Flood
+0,0,0,0,511,1,0.0,0.0,0.0,1.0,0.0,0.0,238,200,0.84,0.01,0.0,0.0,0.0,0.0,0.84,1.0,normal,34.50639220364952,DoS Attack - TCP Connection Flood
+0,0,0,0,511,1,0.0,0.0,0.0,1.0,0.0,0.0,233,195,0.84,0.01,0.0,0.0,0.0,0.0,0.84,1.0,normal,34.413434308450505,DoS Attack - TCP Connection Flood
+0,0,0,0,1,1,0.0,0.0,1.0,1.0,1.0,0.0,255,1,0.0,0.95,0.95,0.0,0.0,0.0,0.94,1.0,anomaly,25.35897431958891,Suspicious Connection
+1,0,0,0,1,1,0.0,0.0,1.0,1.0,1.0,0.0,255,1,0.0,0.95,0.95,0.0,0.0,0.0,0.94,1.0,anomaly,25.354555511099697,Suspicious Connection
+10,2326,231052,1,1,1,0.0,0.0,0.0,0.0,1.0,0.0,1,1,1.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,normal,24.926451820449152,Unusual Traffic - High Volume Transfer
+0,0,0,0,1,1,0.0,0.0,1.0,1.0,1.0,0.0,255,1,0.0,0.94,0.94,0.0,0.0,0.0,0.93,1.0,anomaly,24.028342402394635,Suspicious Connection
+0,0,0,0,1,1,0.0,0.0,1.0,1.0,1.0,0.0,255,1,0.0,0.96,0.95,0.0,0.0,0.0,0.95,1.0,anomaly,23.99908376717685,Suspicious Connection

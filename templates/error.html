@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - ML Intrusion Detection Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>ML Intrusion Detection System</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="/results"><i class="fas fa-chart-line"></i> Results</a></li>
+                    <li><a href="#" id="help-link"><i class="fas fa-question-circle"></i> Help</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="content">
+            <div class="error-container">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2>An Error Occurred</h2>
+                <p id="error-message">{{ error }}</p>
+                <div class="error-actions">
+                    <a href="/" class="btn-primary"><i class="fas fa-home"></i> Return to Home</a>
+                    <button id="try-again-btn" class="btn-secondary"><i class="fas fa-redo"></i> Try Again</button>
+                </div>
+                <div class="error-help">
+                    <h3>Common Solutions:</h3>
+                    <ul>
+                        <li>Make sure your CSV file is properly formatted</li>
+                        <li>Check that the file contains the required columns</li>
+                        <li>Ensure the file size is under 100MB</li>
+                        <li>Try refreshing the page before uploading</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 ML Intrusion Detection System</p>
+        </footer>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Error Page Help</h2>
+            <p>This page appears when an error occurs during file processing or analysis.</p>
+            <h3>What to do:</h3>
+            <ol>
+                <li>Check your file format - make sure it's a valid CSV file</li>
+                <li>Verify the file contains the required columns for analysis</li>
+                <li>Ensure your file isn't corrupted or too large</li>
+                <li>Try returning to the home page and uploading again</li>
+            </ol>
+            <p>If problems persist, please check the console for more detailed error information.</p>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+    "model": "IsolationForest",
+    "anomaly_count": 7,
+    "anomaly_percentage": 10.9375,
+    "accuracy": null,
+    "sample_size": 64
+}

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Entry - ML Intrusion Detection Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .info-tooltip {
+            display: inline-block;
+            margin-left: 0.5rem;
+            color: var(--gray-color);
+            cursor: help;
+            position: relative;
+        }
+        
+        .info-tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem;
+            background-color: var(--dark-color);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-actions {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .form-submit-btn {
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .section-title {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 0.8rem;
+        }
+        
+        .model-selector {
+            margin-top: 2rem;
+            background-color: var(--light-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+        
+        .model-selector h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .model-selector select {
+            padding: 0.7rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .preset-selectors {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        .preset-btn {
+            background-color: var(--light-color);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        .preset-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .preset-btn i {
+            margin-right: 0.5rem;
+        }
+        
+        /* Flash Messages */
+        .flashes {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .flashes li {
+            padding: 0.8rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .flashes li.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .flashes li.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .flashes li.info {
+            background-color: rgba(23, 162, 184, 0.1);
+            color: var(--info-color);
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .flashes li.warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>ML Intrusion Detection System</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="/train"><i class="fas fa-brain"></i> Train</a></li>
+                    <li><a href="/manual_entry" class="active"><i class="fas fa-edit"></i> Manual Entry</a></li>
+                    <li><a href="/capture"><i class="fas fa-network-wired"></i> Live Capture</a></li>
+                    <li><a href="/results"><i class="fas fa-chart-line"></i> Results</a></li>
+                    <li><a href="#" id="help-link"><i class="fas fa-question-circle"></i> Help</a></li>
+                    {% if logged_in %}
+                    <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    {% else %}
+                    <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
+
+        <main class="content">
+            <div class="summary-section">
+                <h2>Manual Network Traffic Entry</h2>
+                <p>Enter network traffic details below to analyze for potential anomalies. All fields are required for accurate analysis.</p>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <ul class="flashes">
+                            {% for category, message in messages %}
+                                <li class="{{ category }}">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="preset-selectors">
+                    <button type="button" class="preset-btn" data-preset="normal">
+                        <i class="fas fa-check-circle"></i> Normal Traffic Example
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="dos">
+                        <i class="fas fa-exclamation-triangle"></i> DoS Attack Example
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="portscan">
+                        <i class="fas fa-search"></i> Port Scan Example
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="bruteforce">
+                        <i class="fas fa-key"></i> Brute Force Example
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="dataexfil">
+                        <i class="fas fa-file-export"></i> Data Exfiltration Example
+                    </button>
+                </div>
+                
+                <form id="manual-entry-form" action="/manual_entry" method="POST">
+                    <h3 class="section-title"><i class="fas fa-network-wired"></i> Connection Details</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="src_ip">Source IP Address <span class="info-tooltip" data-tooltip="The IP address where the traffic originated">?</span></label>
+                            <input type="text" id="src_ip" name="src_ip" placeholder="192.168.1.100" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dst_ip">Destination IP Address <span class="info-tooltip" data-tooltip="The IP address where the traffic is going">?</span></label>
+                            <input type="text" id="dst_ip" name="dst_ip" placeholder="10.0.0.1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="src_port">Source Port <span class="info-tooltip" data-tooltip="The port number from which the connection originated">?</span></label>
+                            <input type="number" id="src_port" name="src_port" min="0" max="65535" placeholder="12345" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dst_port">Destination Port <span class="info-tooltip" data-tooltip="The port number to which the connection is made">?</span></label>
+                            <input type="number" id="dst_port" name="dst_port" min="0" max="65535" placeholder="80" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="protocol">Protocol <span class="info-tooltip" data-tooltip="The network protocol used for the connection">?</span></label>
+                            <select id="protocol" name="protocol" required>
+                                <option value="tcp">TCP</option>
+                                <option value="udp">UDP</option>
+                                <option value="icmp">ICMP</option>
+                                <option value="http">HTTP</option>
+                                <option value="https">HTTPS</option>
+                                <option value="dns">DNS</option>
+                                <option value="ssh">SSH</option>
+                                <option value="ftp">FTP</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title"><i class="fas fa-chart-bar"></i> Traffic Metrics</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="duration">Duration (seconds) <span class="info-tooltip" data-tooltip="How long the connection lasted">?</span></label>
+                            <input type="number" id="duration" name="duration" min="0" step="0.01" placeholder="1.5" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="src_bytes">Source Bytes <span class="info-tooltip" data-tooltip="Number of data bytes sent by the source">?</span></label>
+                            <input type="number" id="src_bytes" name="src_bytes" min="0" placeholder="1024" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dst_bytes">Destination Bytes <span class="info-tooltip" data-tooltip="Number of data bytes sent by the destination">?</span></label>
+                            <input type="number" id="dst_bytes" name="dst_bytes" min="0" placeholder="2048" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="count">Connection Count <span class="info-tooltip" data-tooltip="Number of connections to the same host in past 2 seconds">?</span></label>
+                            <input type="number" id="count" name="count" min="1" placeholder="5" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="srv_count">Service Count <span class="info-tooltip" data-tooltip="Number of connections to the same service in past 2 seconds">?</span></label>
+                            <input type="number" id="srv_count" name="srv_count" min="1" placeholder="3" required>
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title"><i class="fas fa-history"></i> Historical Context</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="dst_host_count">Destination Host Count <span class="info-tooltip" data-tooltip="Number of connections to the same host in past 100 connections">?</span></label>
+                            <input type="number" id="dst_host_count" name="dst_host_count" min="1" placeholder="25" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dst_host_srv_count">Destination Host Service Count <span class="info-tooltip" data-tooltip="Number of connections to the same service in past 100 connections">?</span></label>
+                            <input type="number" id="dst_host_srv_count" name="dst_host_srv_count" min="1" placeholder="15" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="logged_in">Logged In <span class="info-tooltip" data-tooltip="1 if successfully logged in, 0 otherwise">?</span></label>
+                            <select id="logged_in" name="logged_in" required>
+                                <option value="1">Yes (1)</option>
+                                <option value="0">No (0)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="model-selector">
+                        <h3>Select Anomaly Detection Model</h3>
+                        <p>Choose which unsupervised learning model to use for analyzing this network traffic.</p>
+                        <select id="model" name="model" required>
+                            <option value="IsolationForest">Isolation Forest (Recommended)</option>
+                            <option value="LOF">Local Outlier Factor</option>
+                            <option value="OneClassSVM">One-Class SVM</option>
+                            <option value="KMeans">K-Means Clustering</option>
+                            <option value="DBSCAN">DBSCAN</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary form-submit-btn">
+                            <i class="fas fa-search"></i> Analyze Network Traffic
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 ML Intrusion Detection System</p>
+        </footer>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Manual Entry Help</h2>
+            <h3>What is this page for?</h3>
+            <p>This page allows you to manually enter network traffic details to check if they would be detected as anomalous by our machine learning models.</p>
+            
+            <h3>How to use it</h3>
+            <ol>
+                <li>Fill in all the fields with network traffic information</li>
+                <li>Use the preset buttons at the top to quickly populate the form with examples</li>
+                <li>Select an anomaly detection model from the dropdown at the bottom</li>
+                <li>Click "Analyze Network Traffic" to see if the traffic would be flagged as anomalous</li>
+            </ol>
+            
+            <h3>Input Field Descriptions</h3>
+            <ul>
+                <li><strong>Source/Destination IP:</strong> The IP addresses involved in the connection</li>
+                <li><strong>Source/Destination Port:</strong> The network ports used for the connection</li>
+                <li><strong>Protocol:</strong> The network protocol used (TCP, UDP, etc.)</li>
+                <li><strong>Duration:</strong> How long the connection lasted in seconds</li>
+                <li><strong>Source/Destination Bytes:</strong> Amount of data transferred in each direction</li>
+                <li><strong>Connection/Service Count:</strong> Number of recent connections to the same host/service</li>
+                <li><strong>Historical Counts:</strong> Statistics about connections over a longer period</li>
+            </ul>
+            
+            <h3>Choosing a Model</h3>
+            <p>Different anomaly detection models have different strengths:</p>
+            <ul>
+                <li><strong>Isolation Forest:</strong> Best general-purpose model, good for most cases</li>
+                <li><strong>Local Outlier Factor:</strong> Good at finding local anomalies in dense regions</li>
+                <li><strong>One-Class SVM:</strong> Effective with well-defined normal behavior patterns</li>
+                <li><strong>K-Means:</strong> Simple and fast, works well for distinct clusters</li>
+                <li><strong>DBSCAN:</strong> Handles irregular cluster shapes well</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Modal functionality
+            const helpLink = document.getElementById('help-link');
+            const helpModal = document.getElementById('helpModal');
+            const closeBtn = document.querySelector('.close');
+            
+            helpLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                helpModal.style.display = 'block';
+            });
+            
+            closeBtn.addEventListener('click', function() {
+                helpModal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', function(e) {
+                if (e.target === helpModal) {
+                    helpModal.style.display = 'none';
+                }
+            });
+            
+            // Preset data
+            const presets = {
+                normal: {
+                    src_ip: "192.168.1.100",
+                    dst_ip: "192.168.1.1",
+                    src_port: 49152,
+                    dst_port: 80,
+                    protocol: "http",
+                    duration: 0.76,
+                    src_bytes: 1024,
+                    dst_bytes: 2048,
+                    count: 3,
+                    srv_count: 3,
+                    dst_host_count: 45,
+                    dst_host_srv_count: 25,
+                    logged_in: "1"
+                },
+                dos: {
+                    src_ip: "10.0.0.99",
+                    dst_ip: "192.168.1.10",
+                    src_port: 33842,
+                    dst_port: 80,
+                    protocol: "tcp",
+                    duration: 0.02,
+                    src_bytes: 512,
+                    dst_bytes: 0,
+                    count: 125,
+                    srv_count: 125,
+                    dst_host_count: 255,
+                    dst_host_srv_count: 255,
+                    logged_in: "0"
+                },
+                portscan: {
+                    src_ip: "10.0.0.15",
+                    dst_ip: "192.168.1.5",
+                    src_port: 31337,
+                    dst_port: 22,
+                    protocol: "tcp",
+                    duration: 0.01,
+                    src_bytes: 60,
+                    dst_bytes: 0,
+                    count: 24,
+                    srv_count: 1,
+                    dst_host_count: 30,
+                    dst_host_srv_count: 1,
+                    logged_in: "0"
+                },
+                bruteforce: {
+                    src_ip: "10.0.0.50",
+                    dst_ip: "192.168.1.20",
+                    src_port: 41234,
+                    dst_port: 22,
+                    protocol: "ssh",
+                    duration: 5.23,
+                    src_bytes: 4096,
+                    dst_bytes: 1024,
+                    count: 15,
+                    srv_count: 15,
+                    dst_host_count: 15,
+                    dst_host_srv_count: 15,
+                    logged_in: "0"
+                },
+                dataexfil: {
+                    src_ip: "192.168.1.30",
+                    dst_ip: "203.0.113.100",
+                    src_port: 45678,
+                    dst_port: 443,
+                    protocol: "https",
+                    duration: 14.5,
+                    src_bytes: 15000,
+                    dst_bytes: 1200,
+                    count: 1,
+                    srv_count: 1,
+                    dst_host_count: 1,
+                    dst_host_srv_count: 1,
+                    logged_in: "1"
+                }
+            };
+            
+            // Preset buttons
+            const presetButtons = document.querySelectorAll('.preset-btn');
+            presetButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const presetName = this.getAttribute('data-preset');
+                    const preset = presets[presetName];
+                    
+                    // Fill form with preset data
+                    for (const field in preset) {
+                        const input = document.getElementById(field);
+                        if (input) {
+                            input.value = preset[field];
+                        }
+                    }
+                    
+                    // Show confirmation
+                    const flashContainer = document.createElement('div');
+                    flashContainer.className = 'flash-message info';
+                    flashContainer.innerHTML = `
+                        <div class="flash-content">
+                            <span>Loaded ${presetName.charAt(0).toUpperCase() + presetName.slice(1)} example</span>
+                            <button class="flash-close">&times;</button>
+                        </div>
+                    `;
+                    document.body.appendChild(flashContainer);
+                    
+                    // Add event listener to close button
+                    const closeBtn = flashContainer.querySelector('.flash-close');
+                    closeBtn.addEventListener('click', function() {
+                        flashContainer.remove();
+                    });
+                    
+                    // Auto-remove after 3 seconds
+                    setTimeout(() => {
+                        if (document.body.contains(flashContainer)) {
+                            flashContainer.remove();
+                        }
+                    }, 3000);
+                });
+            });
+            
+            // Form validation
+            const form = document.getElementById('manual-entry-form');
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                const requiredInputs = form.querySelectorAll('[required]');
+                
+                requiredInputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        isValid = false;
+                        input.style.borderColor = 'red';
+                    } else {
+                        input.style.borderColor = '';
+                    }
+                });
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    
+                    const flashContainer = document.createElement('div');
+                    flashContainer.className = 'flash-message error';
+                    flashContainer.innerHTML = `
+                        <div class="flash-content">
+                            <span>Please fill in all required fields.</span>
+                            <button class="flash-close">&times;</button>
+                        </div>
+                    `;
+                    document.body.appendChild(flashContainer);
+                    
+                    // Add event listener to close button
+                    const closeBtn = flashContainer.querySelector('.flash-close');
+                    closeBtn.addEventListener('click', function() {
+                        flashContainer.remove();
+                    });
+                    
+                    // Auto-remove after 5 seconds
+                    setTimeout(() => {
+                        if (document.body.contains(flashContainer)) {
+                            flashContainer.remove();
+                        }
+                    }, 5000);
+                } else {
+                    // Show loading state
+                    const submitBtn = form.querySelector('.form-submit-btn');
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+                    submitBtn.disabled = true;
+                }
+            });
+            
+            // Validate IP addresses
+            const ipInputs = document.querySelectorAll('input[id$="_ip"]');
+            ipInputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+                    if (this.value && !ipRegex.test(this.value)) {
+                        this.style.borderColor = 'red';
+                        
+                        const flashContainer = document.createElement('div');
+                        flashContainer.className = 'flash-message warning';
+                        flashContainer.innerHTML = `
+                            <div class="flash-content">
+                                <span>Invalid IP address format. Should be like 192.168.1.1</span>
+                                <button class="flash-close">&times;</button>
+                            </div>
+                        `;
+                        document.body.appendChild(flashContainer);
+                        
+                        // Add event listener to close button
+                        const closeBtn = flashContainer.querySelector('.flash-close');
+                        closeBtn.addEventListener('click', function() {
+                            flashContainer.remove();
+                        });
+                        
+                        // Auto-remove after 5 seconds
+                        setTimeout(() => {
+                            if (document.body.contains(flashContainer)) {
+                                flashContainer.remove();
+                            }
+                        }, 5000);
+                    } else {
+                        this.style.borderColor = '';
+                    }
+                });
+            });
+            
+            // Validate port numbers
+            const portInputs = document.querySelectorAll('input[id$="_port"]');
+            portInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const portValue = parseInt(this.value);
+                    if (portValue < 0 || portValue > 65535) {
+                        this.style.borderColor = 'red';
+                    } else {
+                        this.style.borderColor = '';
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/manual-entry.js"></script>
+    <script src="/static/js/manual-entry-style-fix.js"></script>
+    <script src="/static/js/integration-fix.js"></script>
+</body>
+</html>
