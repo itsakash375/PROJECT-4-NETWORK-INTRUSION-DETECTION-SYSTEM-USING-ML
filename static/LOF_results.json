@@ -1,7 +1,0 @@
-{
-    "model": "LOF",
-    "anomaly_count": 2520,
-    "anomaly_percentage": 10.003175611305176,
-    "accuracy": 0.4881311527469038,
-    "sample_size": 25192
-}

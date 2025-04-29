@@ -1,7 +1,0 @@
-{
-    "model": "KMeans",
-    "anomaly_count": 7017,
-    "anomaly_percentage": 27.854080660527153,
-    "accuracy": 0.8100984439504605,
-    "sample_size": 25192
-}

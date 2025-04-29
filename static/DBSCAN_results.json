@@ -1,7 +1,0 @@
-{
-    "model": "DBSCAN",
-    "anomaly_count": 1824,
-    "anomaly_percentage": 7.2403937758018415,
-    "accuracy": 0.4999603048586853,
-    "sample_size": 25192
-}

@@ -1,1 +1,0 @@
-{"src_ip": "10.0.0.99", "dst_ip": "192.168.1.10", "src_port": "33842", "dst_port": "80", "protocol": "tcp", "duration": "0.02", "src_bytes": "512", "dst_bytes": "0", "count": "125", "srv_count": "125", "dst_host_count": "255", "dst_host_srv_count": "255", "logged_in": "0", "model": "IsolationForest"}
