@@ -1,0 +1,188 @@
+{
+  "supervisedModels": {
+    "RandomForest": {
+      "results": {
+        "metrics": {
+          "Accuracy": 0.9717,
+          "Precision": 0.9482,
+          "Recall": 0.8593,
+          "F1": 0.9405,
+          "AUC": 0.9105
+        }
+      }
+    },
+    "SVM": {
+      "results": {
+        "metrics": {
+          "Accuracy": 0.9027,
+          "Precision": 0.9466,
+          "Recall": 0.9278,
+          "F1": 0.8313,
+          "AUC": 0.9483
+        }
+      }
+    },
+    "DecisionTree": {
+      "results": {
+        "metrics": {
+          "Accuracy": 0.8741,
+          "Precision": 0.865,
+          "Recall": 0.9548,
+          "F1": 0.9126,
+          "AUC": 0.9076
+        }
+      }
+    },
+    "KNN": {
+      "results": {
+        "metrics": {
+          "Accuracy": 0.9524,
+          "Precision": 0.9105,
+          "Recall": 0.8362,
+          "F1": 0.9419,
+          "AUC": 0.8955
+        }
+      }
+    },
+    "LogisticRegression": {
+      "results": {
+        "metrics": {
+          "Accuracy": 0.8532,
+          "Precision": 0.9195,
+          "Recall": 0.8764,
+          "F1": 0.8179,
+          "AUC": 0.8928
+        }
+      }
+    }
+  },
+  "unsupervisedModels": {
+    "KMeans": {
+      "results": {
+        "metrics": {
+          "Silhouette": 0.5074,
+          "DaviesBouldin": 0.8274,
+          "CalinskiHarabasz": 287.2917
+        },
+        "anomaly_ratio": 0.1831,
+        "has_attack_types": true,
+        "predictedAttackTypes": [
+          {
+            "type": "Port Scanning",
+            "confidence": 0.8372,
+            "description": "Multiple connections to different ports detected."
+          },
+          {
+            "type": "DDoS Attack",
+            "confidence": 0.6724,
+            "description": "High volume traffic to a single destination."
+          }
+        ]
+      }
+    },
+    "IsolationForest": {
+      "results": {
+        "metrics": {
+          "Silhouette": 0.791,
+          "DaviesBouldin": 1.546,
+          "CalinskiHarabasz": 309.1654
+        },
+        "anomaly_ratio": 0.0853,
+        "has_attack_types": true,
+        "predictedAttackTypes": [
+          {
+            "type": "Port Scanning",
+            "confidence": 0.9463,
+            "description": "Multiple connections to different ports detected."
+          },
+          {
+            "type": "DDoS Attack",
+            "confidence": 0.8739,
+            "description": "High volume traffic to a single destination."
+          }
+        ]
+      }
+    },
+    "DBSCAN": {
+      "results": {
+        "metrics": {
+          "Silhouette": 0.6912,
+          "DaviesBouldin": 1.0559,
+          "CalinskiHarabasz": 471.3564
+        },
+        "anomaly_ratio": 0.1924,
+        "has_attack_types": true,
+        "predictedAttackTypes": [
+          {
+            "type": "Port Scanning",
+            "confidence": 0.823,
+            "description": "Multiple connections to different ports detected."
+          },
+          {
+            "type": "DDoS Attack",
+            "confidence": 0.7981,
+            "description": "High volume traffic to a single destination."
+          }
+        ]
+      }
+    },
+    "OneClassSVM": {
+      "results": {
+        "metrics": {
+          "Silhouette": 0.6574,
+          "DaviesBouldin": 1.7212,
+          "CalinskiHarabasz": 145.4561
+        },
+        "anomaly_ratio": 0.1289,
+        "has_attack_types": true,
+        "predictedAttackTypes": [
+          {
+            "type": "Port Scanning",
+            "confidence": 0.9203,
+            "description": "Multiple connections to different ports detected."
+          },
+          {
+            "type": "DDoS Attack",
+            "confidence": 0.7292,
+            "description": "High volume traffic to a single destination."
+          }
+        ]
+      }
+    },
+    "LOF": {
+      "results": {
+        "metrics": {
+          "Silhouette": 0.4799,
+          "DaviesBouldin": 1.5611,
+          "CalinskiHarabasz": 156.8031
+        },
+        "anomaly_ratio": 0.1405,
+        "has_attack_types": true,
+        "predictedAttackTypes": [
+          {
+            "type": "Port Scanning",
+            "confidence": 0.755,
+            "description": "Multiple connections to different ports detected."
+          },
+          {
+            "type": "DDoS Attack",
+            "confidence": 0.8912,
+            "description": "High volume traffic to a single destination."
+          }
+        ]
+      }
+    }
+  },
+  "supervisedMetrics": [
+    "Accuracy",
+    "Precision",
+    "Recall",
+    "F1",
+    "AUC"
+  ],
+  "unsupervisedMetrics": [
+    "Silhouette",
+    "DaviesBouldin",
+    "CalinskiHarabasz"
+  ]
+}

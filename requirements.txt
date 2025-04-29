@@ -1,0 +1,10 @@
+Flask
+Flask-Cors
+Flask-Session
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+joblib
+werkzeug

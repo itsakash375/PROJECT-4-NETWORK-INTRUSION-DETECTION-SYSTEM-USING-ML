@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Capture - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('live_capture') }}" class="nav-item">
+                <i class="fas fa-wifi"></i> Live Capture
+            </a>
+            <a href="{{ url_for('manual_entry') }}" class="nav-item">
+                <i class="fas fa-edit"></i> Manual Entry
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>{{ user.username }}</span>
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="main-section">
+        <!-- Page Header -->
+        <div class="row">
+            <div class="col">
+                <div class="page-header">
+                    <h2 class="page-title"><i class="fas fa-wifi"></i> Live Network Traffic Capture</h2>
+                    <div class="page-actions">
+                        <button id="settingsBtn" class="btn secondary-btn">
+                            <i class="fas fa-cog"></i> Settings
+                        </button>
+                    </div>
+                </div>
+                
+                {% if message %}
+                <div class="message {{ message_type }}">
+                    <i class="fas fa-info-circle"></i> {{ message }}
+                </div>
+                {% endif %}
+
+                {% if not models_available %}
+                <div class="message warning">
+                    <i class="fas fa-exclamation-triangle"></i> No trained models available for traffic analysis! Please train at least one unsupervised model first.
+                    <p><a href="{{ url_for('model_training') }}" class="btn secondary-btn">
+                        <i class="fas fa-brain"></i> Go to Model Training
+                    </a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Settings Panel -->
+        <div id="settingsPanel" class="settings-panel">
+            <h3><i class="fas fa-cog"></i> Capture Settings</h3>
+            <form id="captureSettingsForm">
+                <div class="settings-row">
+                    <div class="settings-item">
+                        <label for="captureRate">Capture Rate (packets/second):</label>
+                        <select id="captureRate" class="form-control">
+                            <option value="1">1 packet/second</option>
+                            <option value="3" selected>3 packets/second</option>
+                            <option value="5">5 packets/second</option>
+                            <option value="10">10 packets/second</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="interfaceType">Network Interface (simulated):</label>
+                        <select id="interfaceType" class="form-control">
+                            <option value="eth0">Ethernet (eth0)</option>
+                            <option value="wlan0" selected>Wireless (wlan0)</option>
+                            <option value="lo">Loopback (lo)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-item">
+                        <label for="packetFilter">Packet Filter:</label>
+                        <select id="packetFilter" class="form-control">
+                            <option value="all" selected>All Packets</option>
+                            <option value="tcp">TCP Only</option>
+                            <option value="udp">UDP Only</option>
+                            <option value="icmp">ICMP Only</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="maxPackets">Maximum Packets to Display:</label>
+                        <select id="maxPackets" class="form-control">
+                            <option value="50">50 packets</option>
+                            <option value="100" selected>100 packets</option>
+                            <option value="200">200 packets</option>
+                            <option value="500">500 packets</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="modelSelection">
+                    <h4>Select Models for Analysis:</h4>
+                    <div id="modelList">
+                        {% if unsupervised_models %}
+                            {% for model_name in unsupervised_models %}
+                            <div class="model-checkbox">
+                                <input type="checkbox" id="model_{{ model_name }}" name="selectedModels" value="{{ model_name }}" {% if model_name == best_model %}checked{% endif %}>
+                                <label for="model_{{ model_name }}">{{ model_name }}</label>
+                                {% if model_name == best_model %}<span class="best-model-badge">BEST MODEL</span>{% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No unsupervised models available. Please train models first.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: 15px;">
+                    <button type="button" id="applySettingsBtn" class="btn primary-btn">Apply Settings</button>
+                </div>
+            </form>
+        </div>
+        
+        {% if models_available %}
+        <!-- Live Capture Controls -->
+        <div class="control-panel">
+            <button id="startCaptureBtn" class="btn primary-btn">
+                <i class="fas fa-play"></i> Start Capture
+            </button>
+            <button id="stopCaptureBtn" class="btn danger-btn" disabled>
+                <i class="fas fa-stop"></i> Stop Capture
+            </button>
+            <button id="clearCaptureBtn" class="btn secondary-btn">
+                <i class="fas fa-trash"></i> Clear Data
+            </button>
+            <button id="refreshBtn" class="btn secondary-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        
+        <!-- Real-time Analysis Result -->
+        <div class="analysis-result" id="analysisResult">
+            <h3>Network Traffic Analysis</h3>
+            <div class="result-status status-normal" id="trafficStatus">
+                <i class="fas fa-check-circle network-status-icon"></i>NORMAL TRAFFIC
+            </div>
+            <p id="analysisDescription">
+                No traffic analysis available. Start capturing to analyze network traffic in real-time.
+            </p>
+        </div>
+        
+        <!-- Capture Statistics -->
+        <div class="capture-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="captureTime">0:00</div>
+                <div class="stat-label">Capture Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="packetCount">0</div>
+                <div class="stat-label">Packets Captured</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="packetRate">0</div>
+                <div class="stat-label">Packets/Second</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="anomalyCount">0</div>
+                <div class="stat-label">Anomalies Detected</div>
+            </div>
+        </div>
+        
+        <!-- Packet List -->
+        <div class="packet-list">
+            <h3><i class="fas fa-list"></i> Captured Packets</h3>
+            <div class="packets-table-container">
+                <table class="packets-table" id="packetsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Protocol</th>
+                            <th>Length</th>
+                            <th>Info</th>
+                            <th>Anomaly</th>
+                        </tr>
+                    </thead>
+                    <tbody id="packetsTableBody">
+                        <!-- Packets will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Capture Options and Information -->
+        <div class="capture-options">
+            <div class="capture-option">
+                <h3><i class="fas fa-info-circle"></i> About Live Capture</h3>
+                <p>This feature simulates network packet capture and performs real-time analysis using trained unsupervised models to detect potential intrusions or anomalies.</p>
+                <p>In a real deployment, this would capture actual network packets from your network interfaces. In this demo, we simulate traffic patterns for demonstration purposes.</p>
+                <p><strong>Tips:</strong></p>
+                <ul class="option-list">
+                    <li>Use the Settings button to configure capture options and select which models to use for analysis</li>
+                    <li>The system will automatically analyze each packet using the selected unsupervised models</li>
+                    <li>Packets detected as anomalies will be highlighted in red</li>
+                </ul>
+            </div>
+            <div class="capture-option">
+                <h3><i class="fas fa-shield-alt"></i> Detection Capabilities</h3>
+                <p>The system can detect various types of network attacks and anomalies, including:</p>
+                <ul class="option-list">
+                    <li><strong>Port Scanning</strong> - Attempts to find open ports on a system</li>
+                    <li><strong>DDoS Attacks</strong> - Distributed Denial of Service attacks</li>
+                    <li><strong>Brute Force</strong> - Repeated login attempts</li>
+                    <li><strong>SQL Injection</strong> - Malicious SQL commands in traffic</li>
+                    <li><strong>Cross-Site Scripting</strong> - Injected malicious scripts</li>
+                    <li><strong>Data Exfiltration</strong> - Unauthorized data transfers</li>
+                    <li><strong>Command Injection</strong> - Execution of arbitrary commands</li>
+                    <li><strong>Malware Communication</strong> - Traffic to known malicious servers</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        let captureInterval;
+        let captureStartTime;
+        let isCapturing = false;
+        let packetCounter = 0;
+        let anomalyCounter = 0;
+        let selectedModels = [];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize UI
+            const startCaptureBtn = document.getElementById('startCaptureBtn');
+            const stopCaptureBtn = document.getElementById('stopCaptureBtn');
+            const clearCaptureBtn = document.getElementById('clearCaptureBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const applySettingsBtn = document.getElementById('applySettingsBtn');
+            
+            // Settings panel toggle
+            settingsBtn.addEventListener('click', function() {
+                settingsPanel.style.display = settingsPanel.style.display === 'none' || settingsPanel.style.display === '' ? 'block' : 'none';
+            });
+            
+            // Apply settings
+            applySettingsBtn.addEventListener('click', function() {
+                settingsPanel.style.display = 'none';
+                
+                // Get selected models
+                selectedModels = [];
+                document.querySelectorAll('input[name="selectedModels"]:checked').forEach(function(checkbox) {
+                    selectedModels.push(checkbox.value);
+                });
+                
+                // Show message if no models selected
+                if (selectedModels.length === 0) {
+                    alert("Please select at least one model for analysis.");
+                    return;
+                }
+                
+                // Other settings are retrieved when needed
+            });
+            
+            // Start capture
+            startCaptureBtn.addEventListener('click', function() {
+                if (selectedModels.length === 0) {
+                    // Get the default selection if none made
+                    document.querySelectorAll('input[name="selectedModels"]:checked').forEach(function(checkbox) {
+                        selectedModels.push(checkbox.value);
+                    });
+                    
+                    if (selectedModels.length === 0) {
+                        alert("Please select at least one model for analysis in Settings.");
+                        return;
+                    }
+                }
+                
+                startCapture();
+                startCaptureBtn.disabled = true;
+                stopCaptureBtn.disabled = false;
+            });
+            
+            // Stop capture
+            stopCaptureBtn.addEventListener('click', function() {
+                stopCapture();
+                startCaptureBtn.disabled = false;
+                stopCaptureBtn.disabled = true;
+            });
+            
+            // Clear capture data
+            clearCaptureBtn.addEventListener('click', function() {
+                clearCaptureData();
+            });
+            
+            // Refresh button
+            refreshBtn.addEventListener('click', function() {
+                const refreshIcon = refreshBtn.querySelector('i');
+                refreshIcon.classList.add('refreshing');
+                
+                // Simulate refresh operation
+                setTimeout(function() {
+                    refreshIcon.classList.remove('refreshing');
+                    updateStats();
+                }, 500);
+            });
+        });
+        
+        function startCapture() {
+            isCapturing = true;
+            captureStartTime = new Date();
+            packetCounter = 0;
+            anomalyCounter = 0;
+            
+            // Update UI
+            document.getElementById('captureTime').innerText = '0:00';
+            document.getElementById('packetCount').innerText = '0';
+            document.getElementById('packetRate').innerText = '0';
+            document.getElementById('anomalyCount').innerText = '0';
+            
+            // Reset result
+            document.getElementById('trafficStatus').className = 'result-status status-normal';
+            document.getElementById('trafficStatus').innerHTML = '<i class="fas fa-check-circle network-status-icon"></i>NORMAL TRAFFIC';
+            document.getElementById('analysisDescription').innerText = 'Analyzing network traffic in real-time...';
+            
+            // Get capture rate
+            const captureRate = parseInt(document.getElementById('captureRate').value);
+            
+            // Start capture interval
+            captureInterval = setInterval(function() {
+                capturePackets(captureRate);
+                updateStats();
+            }, 1000);
+        }
+        
+        function stopCapture() {
+            isCapturing = false;
+            clearInterval(captureInterval);
+            
+            // Final analysis
+            finalizeAnalysis();
+        }
+        
+        function capturePackets(count) {
+            for (let i = 0; i < count; i++) {
+                // Fetch a new packet from the server
+                fetch('/api/live-capture/packet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        selectedModels: selectedModels,
+                        packetFilter: document.getElementById('packetFilter').value,
+                        interfaceType: document.getElementById('interfaceType').value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const packet = data.packet;
+                        
+                        // Add packet to table
+                        addPacketToTable(packet);
+                        
+                        // Update counters
+                        packetCounter++;
+                        if (packet.isAnomaly) {
+                            anomalyCounter++;
+                            
+                            // Update analysis if anomaly detected
+                            updateAnalysis(packet);
+                        }
+                        
+                        // Update stats
+                        updateStats();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching packet:', error);
+                });
+            }
+        }
+        
+        function addPacketToTable(packet) {
+            const tableBody = document.getElementById('packetsTableBody');
+            const maxPackets = parseInt(document.getElementById('maxPackets').value);
+            
+            // Create row
+            const row = document.createElement('tr');
+            if (packet.isAnomaly) {
+                row.className = 'anomaly';
+            } else {
+                row.className = 'normal';
+            }
+            
+            // Create cells
+            row.innerHTML = `
+                <td>${packet.id}</td>
+                <td>${packet.timestamp}</td>
+                <td>${packet.src}</td>
+                <td>${packet.dst}</td>
+                <td>${packet.protocol}</td>
+                <td>${packet.length}</td>
+                <td>${packet.info}</td>
+                <td>
+                    <span class="anomaly-indicator ${packet.isAnomaly ? 'anomaly-yes' : 'anomaly-no'}"></span>
+                    ${packet.isAnomaly ? 'Yes' : 'No'}
+                </td>
+            `;
+            
+            // Add to table and limit rows
+            tableBody.prepend(row);
+            
+            // Limit to max packets
+            while (tableBody.children.length > maxPackets) {
+                tableBody.removeChild(tableBody.lastChild);
+            }
+        }
+        
+        function updateStats() {
+            const currentTime = new Date();
+            let elapsedTime = 0;
+            
+            if (isCapturing && captureStartTime) {
+                elapsedTime = Math.floor((currentTime - captureStartTime) / 1000);
+            }
+            
+            // Format time as mm:ss
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+            const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Calculate packet rate
+            const packetRate = elapsedTime > 0 ? Math.round(packetCounter / elapsedTime) : 0;
+            
+            // Update stats
+            document.getElementById('captureTime').innerText = formattedTime;
+            document.getElementById('packetCount').innerText = packetCounter;
+            document.getElementById('packetRate').innerText = packetRate;
+            document.getElementById('anomalyCount').innerText = anomalyCounter;
+        }
+        
+        function updateAnalysis(packet) {
+            // Only update for anomalies - increases to red when anomalies are found
+            if (packet.isAnomaly) {
+                const analysisResult = document.getElementById('analysisResult');
+                const trafficStatus = document.getElementById('trafficStatus');
+                const analysisDescription = document.getElementById('analysisDescription');
+                
+                // Calculate anomaly ratio
+                const anomalyRatio = anomalyCounter / packetCounter;
+                
+                // Update traffic status if anomaly ratio is significant
+                if (anomalyRatio > 0.05) {  // More than 5% anomalies
+                    trafficStatus.className = 'result-status status-anomaly';
+                    trafficStatus.innerHTML = '<i class="fas fa-exclamation-triangle network-status-icon"></i>ANOMALY DETECTED';
+                    
+                    // Update description with latest attack information
+                    if (packet.attack && packet.attack.type) {
+                        analysisDescription.innerText = `Potential ${packet.attack.type} attack detected. ${packet.attack.description || ''}`;
+                    } else {
+                        analysisDescription.innerText = 'Abnormal traffic patterns detected. Further investigation recommended.';
+                    }
+                }
+            }
+        }
+        
+        function finalizeAnalysis() {
+            // After stopping capture, give final verdict
+            const anomalyRatio = anomalyCounter / packetCounter;
+            const trafficStatus = document.getElementById('trafficStatus');
+            const analysisDescription = document.getElementById('analysisDescription');
+            
+            if (anomalyRatio > 0.05) {
+                trafficStatus.className = 'result-status status-anomaly';
+                trafficStatus.innerHTML = '<i class="fas fa-exclamation-triangle network-status-icon"></i>ANOMALY DETECTED';
+                analysisDescription.innerText = `Capture complete. ${Math.round(anomalyRatio * 100)}% of packets were identified as anomalous. Potential network intrusion detected.`;
+            } else {
+                trafficStatus.className = 'result-status status-normal';
+                trafficStatus.className = 'result-status status-normal';
+                trafficStatus.innerHTML = '<i class="fas fa-check-circle network-status-icon"></i>NORMAL TRAFFIC';
+                analysisDescription.innerText = `Capture complete. Only ${Math.round(anomalyRatio * 100)}% of packets were identified as anomalous. Network traffic appears normal.`;
+            }
+            
+            // Submit results to server for logging
+            fetch('/api/live-capture/results', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    captureTime: document.getElementById('captureTime').innerText,
+                    packetCount: packetCounter,
+                    anomalyCount: anomalyCounter,
+                    anomalyRatio: anomalyRatio,
+                    status: anomalyRatio > 0.05 ? 'anomaly' : 'normal',
+                    selectedModels: selectedModels
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Results saved successfully');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving results:', error);
+            });
+        }
+        
+        function clearCaptureData() {
+            // Reset counters
+            packetCounter = 0;
+            anomalyCounter = 0;
+            
+            // Clear table
+            document.getElementById('packetsTableBody').innerHTML = '';
+            
+            // Reset stats
+            document.getElementById('captureTime').innerText = '0:00';
+            document.getElementById('packetCount').innerText = '0';
+            document.getElementById('packetRate').innerText = '0';
+            document.getElementById('anomalyCount').innerText = '0';
+            
+            // Reset analysis
+            document.getElementById('trafficStatus').className = 'result-status status-normal';
+            document.getElementById('trafficStatus').innerHTML = '<i class="fas fa-check-circle network-status-icon"></i>NORMAL TRAFFIC';
+            document.getElementById('analysisDescription').innerText = 'No traffic analysis available. Start capturing to analyze network traffic in real-time.';
+            
+            // Clear server data
+            fetch('/api/live-capture/clear', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Capture data cleared successfully');
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing capture data:', error);
+            });
+        }
+    </script>
+    <script>
+        // Function to save training status to session storage after successful training
+        function saveTrainingStatus(results) {
+            if (!results) return;
+            
+            try {
+                // Save the full results
+                sessionStorage.setItem('trainingResults', JSON.stringify(results));
+                
+                // Also save a flag indicating models are trained
+                const hasSupervised = results && Object.keys(results.supervisedModels || {}).length > 0;
+                const hasUnsupervised = results && Object.keys(results.unsupervisedModels || {}).length > 0;
+                
+                sessionStorage.setItem('modelsTrainedStatus', JSON.stringify({
+                    supervisedTrained: hasSupervised,
+                    unsupervisedTrained: hasUnsupervised,
+                    timestamp: new Date().toISOString()
+                }));
+                
+                console.log("Saved training status to session storage");
+            } catch (e) {
+                console.error("Error saving training status:", e);
+            }
+        }
+        
+        // Function to check if models exist in training_results.json
+        function checkTrainingResultsFile() {
+            fetch('/api/training-results', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.trainingResults) {
+                    console.log("Found training results in server");
+                    saveTrainingStatus(data.trainingResults);
+                    
+                    // Reload the page to reflect the new status
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error("Error checking training results file:", error);
+            });
+        }
+        
+        // Check if the page needs to be reloaded with model status
+        document.addEventListener('DOMContentLoaded', function() {
+            // If we're showing a "no models" message but have models in session storage
+            const noModelsMsg = document.querySelector('.message.warning');
+            const storedResults = sessionStorage.getItem('trainingResults');
+            
+            if (noModelsMsg && storedResults) {
+                try {
+                    const results = JSON.parse(storedResults);
+                    const hasModels = (results && 
+                        ((results.supervisedModels && Object.keys(results.supervisedModels).length > 0) || 
+                        (results.unsupervisedModels && Object.keys(results.unsupervisedModels).length > 0)));
+                        
+                    if (hasModels) {
+                        console.log("Found models in session storage but page shows none - reloading");
+                        window.location.reload();
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Error parsing stored results:", e);
+                }
+            }
+            
+            // If we don't have results in session storage, check the server
+            if ((!storedResults || storedResults === "null" || storedResults === "undefined") && noModelsMsg) {
+                console.log("No results in session storage, checking server");
+                checkTrainingResultsFile();
+            }
+        });
+        </script>
+</body>
+</html>

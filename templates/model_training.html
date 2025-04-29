@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item active">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>{{ user.username }}</span>
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="main-section">
+        <!-- Page Header -->
+        <div class="row">
+            <div class="col">
+                <div class="page-header">
+                    <h2 class="page-title"><i class="fas fa-brain"></i> Model Training</h2>
+                    <div class="page-actions">
+                        <button class="btn primary-btn" id="trainModelsBtn" onclick="startTraining()">
+                            <i class="fas fa-play"></i> Train Selected Models
+                        </button>
+                    </div>
+                </div>
+                
+                {% if message %}
+                <div class="message {{ message_type }}">
+                    <i class="fas fa-info-circle"></i> {{ message }}
+                </div>
+                {% endif %}
+
+                {% if not dataset_info and not preprocessed_dataset_info %}
+                <div class="message warning">
+                    <i class="fas fa-exclamation-triangle"></i> No dataset available! Please upload a dataset first.
+                    <p><a href="{{ url_for('data_upload') }}" class="btn secondary-btn">
+                        <i class="fas fa-upload"></i> Go to Data Upload
+                    </a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if dataset_info or preprocessed_dataset_info %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                {% if preprocessed_dataset_info %}
+                <strong>Using preprocessed dataset: {{ preprocessed_dataset_info.fileName }}</strong>
+                <p>{{ preprocessed_dataset_info.totalRows }} rows, {{ preprocessed_dataset_info.totalColumns }} columns, {{ 'Labeled' if preprocessed_dataset_info.isLabeled else 'Unlabeled' }} data</p>
+                {% else %}
+                <strong>Using original dataset: {{ dataset_info.fileName }}</strong>
+                <p>{{ dataset_info.totalRows }} rows, {{ dataset_info.totalColumns }} columns, {{ 'Labeled' if dataset_info.isLabeled else 'Unlabeled' }} data</p>
+                {% if not is_preprocessed %}
+                <p><strong>Note:</strong> You may want to preprocess your data before training models.</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        {% set is_labeled = (preprocessed_dataset_info.isLabeled if preprocessed_dataset_info else dataset_info.isLabeled) %}
+        
+        <form id="trainingForm">
+            <!-- Model Selection -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-brain"></i> Select Models to Train</h3>
+                </div>
+                <div class="card-body">
+                    {% if is_labeled %}
+                    <!-- Supervised Models Section -->
+                    <div class="model-type-container">
+                        <div class="model-type-title">
+                            <i class="fas fa-tag"></i>
+                            <h4>Supervised Models</h4>
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button type="button" class="btn secondary-btn btn-sm" id="selectAllSupervised">
+                                <i class="fas fa-check-square"></i> Select All
+                            </button>
+                            <button type="button" class="btn secondary-btn btn-sm" id="deselectAllSupervised">
+                                <i class="fas fa-square"></i> Deselect All
+                            </button>
+                        </div>
+                        
+                        <div class="models-selection">
+                            <!-- RandomForest -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelRandomForest" name="supervisedModels" value="RandomForest" checked>
+                                <label for="modelRandomForest">Random Forest</label>
+                            </div>
+                            
+                            <!-- SVM -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelSVM" name="supervisedModels" value="SVM" checked>
+                                <label for="modelSVM">SVM</label>
+                            </div>
+                            
+                            <!-- Decision Tree -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelDecisionTree" name="supervisedModels" value="DecisionTree" checked>
+                                <label for="modelDecisionTree">Decision Tree</label>
+                            </div>
+                            
+                            <!-- KNN -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelKNN" name="supervisedModels" value="KNN" checked>
+                                <label for="modelKNN">KNN</label>
+                            </div>
+                            
+                            <!-- Logistic Regression -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelLogisticRegression" name="supervisedModels" value="LogisticRegression" checked>
+                                <label for="modelLogisticRegression">Logistic Regression</label>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Unsupervised Models Section -->
+                    <div class="model-type-container">
+                        <div class="model-type-title">
+                            <i class="fas fa-project-diagram"></i>
+                            <h4>Unsupervised Models</h4>
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button type="button" class="btn secondary-btn btn-sm" id="selectAllUnsupervised">
+                                <i class="fas fa-check-square"></i> Select All
+                            </button>
+                            <button type="button" class="btn secondary-btn btn-sm" id="deselectAllUnsupervised">
+                                <i class="fas fa-square"></i> Deselect All
+                            </button>
+                        </div>
+                        
+                        <div class="models-selection">
+                            <!-- K-Means -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelKMeans" name="unsupervisedModels" value="KMeans" checked>
+                                <label for="modelKMeans">K-Means</label>
+                            </div>
+                            
+                            <!-- Isolation Forest -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelIsolationForest" name="unsupervisedModels" value="IsolationForest" checked>
+                                <label for="modelIsolationForest">Isolation Forest</label>
+                            </div>
+                            
+                            <!-- DBSCAN -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelDBSCAN" name="unsupervisedModels" value="DBSCAN" checked>
+                                <label for="modelDBSCAN">DBSCAN</label>
+                            </div>
+                            
+                            <!-- One-Class SVM -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelOneClassSVM" name="unsupervisedModels" value="OneClassSVM" checked>
+                                <label for="modelOneClassSVM">One-Class SVM</label>
+                            </div>
+                            
+                            <!-- LOF -->
+                            <div class="model-item">
+                                <input type="checkbox" id="modelLOF" name="unsupervisedModels" value="LOF" checked>
+                                <label for="modelLOF">Local Outlier Factor</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hidden default parameters for all models -->
+            <input type="hidden" name="validationSplit" value="20">
+            <input type="hidden" name="maxTrainingTime" value="60">
+            
+            <!-- Hidden default metrics for supervised models -->
+            <input type="hidden" name="supervisedMetrics" value="Accuracy">
+            <input type="hidden" name="supervisedMetrics" value="Precision">
+            <input type="hidden" name="supervisedMetrics" value="Recall">
+            <input type="hidden" name="supervisedMetrics" value="F1">
+            <input type="hidden" name="supervisedMetrics" value="AUC">
+            
+            <!-- Hidden default metrics for unsupervised models -->
+            <input type="hidden" name="unsupervisedMetrics" value="Silhouette">
+            <input type="hidden" name="unsupervisedMetrics" value="DaviesBouldin">
+            <input type="hidden" name="unsupervisedMetrics" value="CalinskiHarabasz">
+            <input type="hidden" name="unsupervisedMetrics" value="Homogeneity">
+            <input type="hidden" name="unsupervisedMetrics" value="Completeness">
+            
+            <!-- Hidden default parameters for all models -->
+            <!-- RandomForest parameters -->
+            <input type="hidden" name="rfNumTrees" value="100">
+            <input type="hidden" name="rfMaxDepth" value="10">
+            
+            <!-- SVM parameters -->
+            <input type="hidden" name="svmKernel" value="rbf">
+            <input type="hidden" name="svmC" value="1.0">
+            
+            <!-- Decision Tree parameters -->
+            <input type="hidden" name="dtMaxDepth" value="10">
+            <input type="hidden" name="dtCriterion" value="gini">
+            
+            <!-- KNN parameters -->
+            <input type="hidden" name="knnNeighbors" value="5">
+            <input type="hidden" name="knnWeights" value="uniform">
+            
+            <!-- Logistic Regression parameters -->
+            <input type="hidden" name="lrC" value="1.0">
+            <input type="hidden" name="lrSolver" value="lbfgs">
+            
+            <!-- K-Means parameters -->
+            <input type="hidden" name="kmClusters" value="5">
+            <input type="hidden" name="kmInit" value="k-means++">
+            
+            <!-- Isolation Forest parameters -->
+            <input type="hidden" name="ifContamination" value="0.1">
+            <input type="hidden" name="ifEstimators" value="100">
+            
+            <!-- DBSCAN parameters -->
+            <input type="hidden" name="dbscanEps" value="0.5">
+            <input type="hidden" name="dbscanMinSamples" value="5">
+            
+            <!-- One-Class SVM parameters -->
+            <input type="hidden" name="ocsvmNu" value="0.1">
+            <input type="hidden" name="ocsvmKernel" value="rbf">
+            
+            <!-- LOF parameters -->
+            <input type="hidden" name="lofNeighbors" value="20">
+            <input type="hidden" name="lofContamination" value="0.1">
+        </form>
+        
+        <!-- Training Progress Section (Initially Hidden) -->
+        <div class="row" id="progressSection" style="display: none;">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-spinner fa-spin"></i> Training Progress</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-container">
+                            <div class="overall-progress">
+                                <h4>Overall Progress</h4>
+                                <div class="progress">
+                                    <div class="progress-bar" id="overallProgressBar" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                                <p id="overallProgressText">0/0 models completed</p>
+                            </div>
+                            
+                            <div class="current-model-progress">
+                                <h4>Current Model: <span id="currentModelName">Initializing...</span></h4>
+                                <div class="progress">
+                                    <div class="progress-bar" id="currentModelProgressBar" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                                <p id="currentModelProgressText">Preparing to train...</p>
+                            </div>
+                            
+                            <div class="text-center" style="margin-top: 30px;">
+                                <div id="modelCountDisplay" class="model-count-display">
+                                    <span id="completedModelsCount">0</span> of <span id="totalModelsCount">0</span> Models Completed
+                                </div>
+                                <a href="{{ url_for('results') }}" class="btn primary-btn" id="viewResultsBtn" style="display: none;">
+                                    <i class="fas fa-chart-bar"></i> View Results
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select/deselect all supervised models
+            const selectAllSupervised = document.getElementById('selectAllSupervised');
+            const deselectAllSupervised = document.getElementById('deselectAllSupervised');
+            
+            if (selectAllSupervised) {
+                selectAllSupervised.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="supervisedModels"]');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                });
+            }
+            
+            if (deselectAllSupervised) {
+                deselectAllSupervised.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="supervisedModels"]');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                });
+            }
+            
+            // Select/deselect all unsupervised models
+            const selectAllUnsupervised = document.getElementById('selectAllUnsupervised');
+            const deselectAllUnsupervised = document.getElementById('deselectAllUnsupervised');
+            
+            if (selectAllUnsupervised) {
+                selectAllUnsupervised.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="unsupervisedModels"]');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                });
+            }
+            
+            if (deselectAllUnsupervised) {
+                deselectAllUnsupervised.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="unsupervisedModels"]');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                });
+            }
+        });
+
+        // Start training function
+        function startTraining() {
+            // Get form data
+            const form = document.getElementById('trainingForm');
+            const formData = new FormData(form);
+            
+            // Count selected models
+            const selectedSupervised = document.querySelectorAll('input[name="supervisedModels"]:checked').length;
+            const selectedUnsupervised = document.querySelectorAll('input[name="unsupervisedModels"]:checked').length;
+            const totalModels = selectedSupervised + selectedUnsupervised;
+            
+            if (totalModels === 0) {
+                alert('Please select at least one model to train.');
+                return;
+            }
+            
+            // Show progress section and disable the train button
+            const progressSection = document.getElementById('progressSection');
+            const trainModelsBtn = document.getElementById('trainModelsBtn');
+            
+            if (progressSection && trainModelsBtn) {
+                progressSection.style.display = 'block';
+                trainModelsBtn.disabled = true;
+                
+                // Update the total models count
+                const totalModelsCount = document.getElementById('totalModelsCount');
+                if (totalModelsCount) {
+                    totalModelsCount.textContent = totalModels;
+                }
+            }
+            
+            // Submit form data via API
+            fetch('/train_models_api', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // If API call is successful, start checking for progress updates
+                    startProgressUpdates();
+                } else {
+                    alert(data.message);
+                    // Re-enable train button if there was an error
+                    if (trainModelsBtn) {
+                        trainModelsBtn.disabled = false;
+                    }
+                    // Hide progress section
+                    if (progressSection) {
+                        progressSection.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while starting the training process');
+                // Re-enable train button on error
+                if (trainModelsBtn) {
+                    trainModelsBtn.disabled = false;
+                }
+                // Hide progress section
+                if (progressSection) {
+                    progressSection.style.display = 'none';
+                }
+            });
+        }
+        
+        // Progress updates
+        let progressInterval;
+        
+        function startProgressUpdates() {
+            // Clear any existing interval
+            if (progressInterval) {
+                clearInterval(progressInterval);
+            }
+            
+            // Set up polling interval
+            progressInterval = setInterval(updateProgress, 1000);
+        }
+        
+        function updateProgress() {
+            fetch('/get_training_progress')
+                .then(response => response.json())
+                .then(data => {
+                    // Update UI elements
+                    updateProgressUI(data);
+                    
+                    // Check if training is complete
+                    if (data.overall_progress >= 100 && !data.is_training) {
+                        clearInterval(progressInterval);
+                        
+                        // Show view results button
+                        const viewResultsBtn = document.getElementById('viewResultsBtn');
+                        if (viewResultsBtn) {
+                            viewResultsBtn.style.display = 'inline-flex';
+                            viewResultsBtn.classList.add('show');
+                            viewResultsBtn.classList.add('pulse-animation');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error getting progress:', error);
+                });
+        }
+        
+        function updateProgressUI(data) {
+            // Update overall progress bar
+            const overallProgressBar = document.getElementById('overallProgressBar');
+            if (overallProgressBar) {
+                overallProgressBar.style.width = data.overall_progress + '%';
+                overallProgressBar.textContent = data.overall_progress + '%';
+            }
+            
+            // Update model counts
+            const completedModelsCount = document.getElementById('completedModelsCount');
+            if (completedModelsCount) {
+                completedModelsCount.textContent = data.completed_models;
+            }
+            
+            // Update overall text
+            const overallProgressText = document.getElementById('overallProgressText');
+            if (overallProgressText) {
+                overallProgressText.textContent = `${data.completed_models}/${data.total_models} models completed`;
+            }
+            
+            // Update current model name
+            const currentModelName = document.getElementById('currentModelName');
+            if (currentModelName) {
+                currentModelName.textContent = data.current_model || 'Initializing...';
+            }
+            
+            // Update current model progress
+            const currentModelProgressBar = document.getElementById('currentModelProgressBar');
+            if (currentModelProgressBar) {
+                currentModelProgressBar.style.width = data.current_model_progress + '%';
+                currentModelProgressBar.textContent = data.current_model_progress + '%';
+            }
+            
+            // Update status text
+            const currentModelProgressText = document.getElementById('currentModelProgressText');
+            if (currentModelProgressText) {
+                currentModelProgressText.textContent = data.status;
+            }
+        }
+    </script>
+
+    <!-- JavaScript imports -->
+    <script src="{{ url_for('static', filename='config.js') }}"></script>
+    <script src="{{ url_for('static', filename='model-training.js') }}"></script>
+    <script src="/static/model_status_fix.js"></script>
+</body>
+<script>
+    // Function to store training results after successful training
+    function storeTrainingResults() {
+        fetch('/api/training-results', {
+            method: 'GET',
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.trainingResults) {
+                console.log("Storing training results in session storage after completion");
+                
+                // Store full results
+                sessionStorage.setItem('trainingResults', JSON.stringify(data.trainingResults));
+                
+                // Store training status
+                const hasSupervised = data.trainingResults && 
+                    Object.keys(data.trainingResults.supervisedModels || {}).length > 0;
+                const hasUnsupervised = data.trainingResults && 
+                    Object.keys(data.trainingResults.unsupervisedModels || {}).length > 0;
+                
+                sessionStorage.setItem('modelsTrainedStatus', JSON.stringify({
+                    supervisedTrained: hasSupervised,
+                    unsupervisedTrained: hasUnsupervised,
+                    timestamp: new Date().toISOString()
+                }));
+            }
+        })
+        .catch(error => {
+            console.error("Error storing training results:", error);
+        });
+    }
+    
+    // Modify existing updateProgress function to store results on completion
+    const originalUpdateProgress = updateProgress;
+    updateProgress = function() {
+        fetch('/get_training_progress')
+            .then(response => response.json())
+            .then(data => {
+                // Call original function
+                updateProgressUI(data);
+                
+                // Check if training is complete
+                if (data.overall_progress >= 100 && !data.is_training) {
+                    clearInterval(progressInterval);
+                    
+                    // Store results when training completes
+                    storeTrainingResults();
+                    
+                    // Show view results button
+                    const viewResultsBtn = document.getElementById('viewResultsBtn');
+                    if (viewResultsBtn) {
+                        viewResultsBtn.style.display = 'inline-flex';
+                        viewResultsBtn.classList.add('show');
+                        viewResultsBtn.classList.add('pulse-animation');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error getting progress:', error);
+            });
+    };
+    
+    // Enhance the "View Results" button to ensure it updates session storage
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewResultsBtn = document.getElementById('viewResultsBtn');
+        if (viewResultsBtn) {
+            viewResultsBtn.addEventListener('click', function(e) {
+                // Update session storage one more time before navigating
+                storeTrainingResults();
+            });
+        }
+    });
+    </script>
+</html>

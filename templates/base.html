@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Network Intrusion Detection System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item {% if request.endpoint == 'data_upload' %}active{% endif %}">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item {% if request.endpoint == 'preprocessing' %}active{% endif %}">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item {% if request.endpoint == 'model_training' %}active{% endif %}">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('live_capture') }}" class="nav-item {% if request.endpoint == 'live_capture' %}active{% endif %}">
+                <i class="fas fa-wifi"></i> Live Capture
+            </a>
+            <a href="{{ url_for('manual_entry') }}" class="nav-item {% if request.endpoint == 'manual_entry' %}active{% endif %}">
+                <i class="fas fa-edit"></i> Manual Entry
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item {% if request.endpoint == 'results' %}active{% endif %}">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>{{ user.username if user else 'Guest' }}</span>
+            {% if user %}
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="main-section">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}{% endblock %}
+
+    <script src="{{ url_for('static', filename='js/model_status_fix.js') }}"></script>
+</body>
+</html>

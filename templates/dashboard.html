@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('live_capture') }}" class="nav-item">
+                <i class="fas fa-wifi"></i> Live Capture
+            </a>
+            <a href="{{ url_for('manual_entry') }}" class="nav-item">
+                <i class="fas fa-edit"></i> Manual Entry
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>{{ user.username }}</span>
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="main-section">
+        <!-- Welcome Message -->
+        <div class="welcome-card">
+            <h1>Welcome to NetGuardian IDS</h1>
+            <p>Your comprehensive solution for detecting and analyzing network intrusions through machine learning techniques.</p>
+            <p>Use the features below to upload data, train models, and analyze network traffic in real-time.</p>
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('data_upload') }}" class="btn primary-btn">
+                    <i class="fas fa-upload"></i> Upload Data
+                </a>
+                <a href="{{ url_for('preprocessing') }}" class="btn secondary-btn">
+                    <i class="fas fa-broom"></i> Preprocess Data
+                </a>
+                <a href="{{ url_for('model_training') }}" class="btn primary-btn">
+                    <i class="fas fa-brain"></i> Train Models
+                </a>
+                <a href="{{ url_for('live_capture') }}" class="btn secondary-btn">
+                    <i class="fas fa-wifi"></i> Live Capture
+                </a>
+                <a href="{{ url_for('manual_entry') }}" class="btn primary-btn">
+                    <i class="fas fa-edit"></i> Manual Entry
+                </a>
+                <a href="{{ url_for('results') }}" class="btn secondary-btn">
+                    <i class="fas fa-chart-bar"></i> View Results
+                </a>
+            </div>
+        </div>
+        
+        <!-- Display any messages -->
+        {% if message %}
+        <div class="message {{ message_type }}">
+            <i class="fas fa-info-circle"></i> {{ message }}
+        </div>
+        {% endif %}
+        
+        <!-- Feature Highlights -->
+        <div class="feature-grid">
+            <a href="{{ url_for('data_upload') }}" class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <div class="feature-title">Data Upload</div>
+                <div class="feature-description">Upload your network traffic data for analysis or use sample datasets.</div>
+            </a>
+            
+            <a href="{{ url_for('preprocessing') }}" class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-broom"></i>
+                </div>
+                <div class="feature-title">Data Preprocessing</div>
+                <div class="feature-description">Clean and transform your data for better model performance.</div>
+            </a>
+            
+            <a href="{{ url_for('model_training') }}" class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="feature-title">Model Training</div>
+                <div class="feature-description">Train machine learning models to detect network intrusions.</div>
+            </a>
+            
+            <a href="{{ url_for('live_capture') }}" class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-wifi"></i>
+                </div>
+                <div class="feature-title">Live Capture</div>
+                <div class="feature-description">Capture and analyze network traffic in real-time.</div>
+            </a>
+            
+            <a href="{{ url_for('manual_entry') }}" class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <div class="feature-title">Manual Entry</div>
+                <div class="feature-description">Manually enter traffic parameters to test for anomalies.</div>
+            </a>
+            
+            <a href="{{ url_for('results') }}" class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="feature-title">Results & Analysis</div>
+                <div class="feature-description">View detailed analysis and results from your trained models.</div>
+            </a>
+        </div>
+        
+        <!-- Quick Start Guide -->
+        <div class="quick-start-guide">
+            <h2>Quick Start Guide</h2>
+            
+            <div class="steps-container">
+                <div class="step-item">
+                    <div class="step-content">
+                        <div class="step-title">Upload Network Data</div>
+                        <div class="step-description">
+                            Start by uploading your network traffic data or use one of our sample datasets to get started quickly.
+                        </div>
+                        <div class="step-action">
+                            <a href="{{ url_for('data_upload') }}" class="btn secondary-btn">
+                                <i class="fas fa-upload"></i> Upload Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-content">
+                        <div class="step-title">Preprocess Your Data</div>
+                        <div class="step-description">
+                            Clean and transform your data to improve model accuracy and performance.
+                        </div>
+                        <div class="step-action">
+                            <a href="{{ url_for('preprocessing') }}" class="btn secondary-btn">
+                                <i class="fas fa-broom"></i> Preprocess Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-content">
+                        <div class="step-title">Train Detection Models</div>
+                        <div class="step-description">
+                            Train machine learning models using your data to detect network intrusions.
+                        </div>
+                        <div class="step-action">
+                            <a href="{{ url_for('model_training') }}" class="btn secondary-btn">
+                                <i class="fas fa-brain"></i> Train Models
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-content">
+                        <div class="step-title">Analyze Live Traffic</div>
+                        <div class="step-description">
+                            Use your trained models to analyze network traffic in real-time or manually enter parameters.
+                        </div>
+                        <div class="step-action">
+                            <a href="{{ url_for('live_capture') }}" class="btn secondary-btn">
+                                <i class="fas fa-wifi"></i> Live Capture
+                            </a>
+                            <a href="{{ url_for('manual_entry') }}" class="btn secondary-btn" style="margin-left: 10px;">
+                                <i class="fas fa-edit"></i> Manual Entry
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-content">
+                        <div class="step-title">View Results</div>
+                        <div class="step-description">
+                            Examine the results of your analysis and generate detailed reports.
+                        </div>
+                        <div class="step-action">
+                            <a href="{{ url_for('results') }}" class="btn secondary-btn">
+                                <i class="fas fa-chart-bar"></i> View Results
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='config.js') }}"></script>
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='data-upload.js') }}"></script>
+    <script src="{{ url_for('static', filename='preprocessing.js') }}"></script>
+    <script src="{{ url_for('static', filename='model-training.js') }}"></script>
+    <script src="{{ url_for('static', filename='live-capture.js') }}"></script>
+    <script src="{{ url_for('static', filename='manual-entry.js') }}"></script>
+    <script src="{{ url_for('static', filename='results.js') }}"></script>
+    <script src="{{ url_for('static', filename='report.js') }}"></script>
+    <script src="/static/model_status_fix.js"></script>
+</body>
+</html>

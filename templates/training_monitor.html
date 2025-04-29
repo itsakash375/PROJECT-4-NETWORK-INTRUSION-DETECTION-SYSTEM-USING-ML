@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training Progress - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item active">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>{{ user.username }}</span>
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="main-section">
+        <div class="page-header">
+            <h2 class="page-title"><i class="fas fa-spinner fa-spin"></i> Model Training Progress</h2>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-brain"></i> Training Progress</h3>
+            </div>
+            <div class="card-body">
+                <div class="progress-container">
+                    <div class="overall-progress">
+                        <h4>Overall Progress</h4>
+                        <div class="progress">
+                            <div class="progress-bar" id="overallProgressBar" role="progressbar" style="width: 0%">0%</div>
+                        </div>
+                        <p id="overallProgressText">0/0 models completed</p>
+                    </div>
+                    
+                    <div class="current-model-progress">
+                        <h4>Current Model: <span id="currentModelName">Initializing...</span></h4>
+                        <div class="progress">
+                            <div class="progress-bar" id="currentModelProgressBar" role="progressbar" style="width: 0%">0%</div>
+                        </div>
+                        <p id="currentModelProgressText">Preparing to train...</p>
+                    </div>
+                    
+                    <div class="text-center" style="margin-top: 30px;">
+                        <div id="modelCountDisplay" class="model-count-display">
+                            <span id="completedModelsCount">0</span> of <span id="totalModelsCount">0</span> Models Completed
+                        </div>
+                        <a href="{{ url_for('results') }}" class="btn primary-btn" id="viewResultsBtn" style="display: none;">
+                            <i class="fas fa-chart-bar"></i> View Results
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const overallProgressBar = document.getElementById('overallProgressBar');
+            const overallProgressText = document.getElementById('overallProgressText');
+            const currentModelName = document.getElementById('currentModelName');
+            const currentModelProgressBar = document.getElementById('currentModelProgressBar');
+            const currentModelProgressText = document.getElementById('currentModelProgressText');
+            const completedModelsCount = document.getElementById('completedModelsCount');
+            const totalModelsCount = document.getElementById('totalModelsCount');
+            const viewResultsBtn = document.getElementById('viewResultsBtn');
+            
+            let progressInterval;
+            
+            // Start checking progress immediately
+            startProgressUpdates();
+            
+            function startProgressUpdates() {
+                // Start polling for progress updates
+                progressInterval = setInterval(updateProgress, 1000);
+            }
+            
+            function updateProgress() {
+                fetch('/get_training_progress')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update progress UI
+                        updateProgressUI(data);
+                        
+                        // Check if training is complete
+                        if (data.overall_progress >= 100 && !data.is_training) {
+                            clearInterval(progressInterval);
+                            
+                            // Show view results button
+                            viewResultsBtn.style.display = 'inline-flex';
+                            viewResultsBtn.classList.add('show');
+                            viewResultsBtn.classList.add('pulse-animation');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error getting progress:', error);
+                    });
+            }
+            
+            function updateProgressUI(data) {
+                // Update overall progress
+                overallProgressBar.style.width = data.overall_progress + '%';
+                overallProgressBar.textContent = data.overall_progress + '%';
+                
+                // Update model counts
+                completedModelsCount.textContent = data.completed_models;
+                totalModelsCount.textContent = data.total_models;
+                
+                // Update overall text
+                overallProgressText.textContent = `${data.completed_models}/${data.total_models} models completed`;
+                
+                // Update current model
+                currentModelName.textContent = data.current_model || 'Initializing...';
+                
+                // Update current model progress
+                currentModelProgressBar.style.width = data.current_model_progress + '%';
+                currentModelProgressBar.textContent = data.current_model_progress + '%';
+                
+                // Update status text
+                currentModelProgressText.textContent = data.status;
+            }
+        });
+    </script>
+</body>
+</html>

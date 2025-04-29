@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Data Upload - Network Intrusion Detection System{% endblock %}
+{% block content %}
+<!-- Page Header -->
+<div class="row">
+    <div class="col">
+        <div class="page-header">
+            <h2 class="page-title"><i class="fas fa-upload"></i> Data Upload</h2>
+            <div class="page-actions">
+                <button class="btn secondary-btn" id="clearDataBtn">
+                    <i class="fas fa-trash"></i> Clear Data
+                </button>
+            </div>
+        </div>
+        
+        {% if message %}
+        <div class="message {{ message_type }}">
+            <i class="fas fa-info-circle"></i> {{ message }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload section -->
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-file-upload"></i> Upload Dataset</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('upload_file_form') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                    <div class="upload-container" id="uploadContainer">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h3>Drag & Drop Files Here</h3>
+                        <p>or</p>
+                        <!-- IMPORTANT: Removed the 'for' attribute to prevent automatic click behavior -->
+                        <button type="button" class="btn primary-btn" id="browseButton">
+                            <i class="fas fa-file-alt"></i> Browse Files
+                        </button>
+                        <input type="file" id="fileInput" name="file" accept=".csv, .txt" style="display: none;">
+                        <p class="upload-note">Supported formats: CSV, TXT (Max size: 200MB)</p>
+                    </div>
+                    
+                    <div id="uploadButtonContainer" style="text-align: center; margin-top: 20px; display: none;">
+                        <button type="submit" class="btn primary-btn">
+                            <i class="fas fa-upload"></i> Upload File
+                        </button>
+                    </div>
+                </form>
+                
+                {% if dataset_info %}
+                <div class="upload-preview" id="uploadPreview">
+                    <div class="upload-status">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="upload-info">
+                            <h4 id="fileName">{{ dataset_info.fileName }}</h4>
+                            <p id="fileSize">{{ dataset_info.fileSize }}</p>
+                        </div>
+                    </div>
+                    <div class="upload-actions">
+                        <button class="btn secondary-btn" id="viewDataBtn">
+                            <i class="fas fa-eye"></i> View Data
+                        </button>
+                        <button class="btn danger-btn" id="removeFileBtn">
+                            <i class="fas fa-times"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include rest of your data upload content here -->
+<!-- Dataset information section -->
+{% if dataset_info %}
+<div class="row">
+    <div class="col">
+        <!-- Your dataset info content -->
+    </div>
+</div>
+{% endif %}
+
+<!-- Sample datasets section -->
+<div class="row">
+    <div class="col">
+        <!-- Your sample datasets content -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ---- IMPORTANT: Create a flag to track if we're currently handling a file input ----
+    let isHandlingFileInput = false;
+    
+    // File input change handler
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        if (this.files.length > 0 && !isHandlingFileInput) {
+            isHandlingFileInput = true; // Set flag to prevent duplicate processing
+            
+            document.getElementById('uploadButtonContainer').style.display = 'block';
+            
+            // Display file name in upload container
+            const fileName = this.files[0].name;
+            const fileSize = formatFileSize(this.files[0].size);
+            document.querySelector('.upload-container h3').textContent = fileName;
+            document.querySelector('.upload-note').textContent = `File size: ${fileSize}`;
+            
+            // Reset flag after a short delay
+            setTimeout(() => {
+                isHandlingFileInput = false;
+            }, 500);
+        }
+    });
+    
+    // Clear data button
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) {
+        clearDataBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all uploaded data?')) {
+                window.location.href = "{{ url_for('clear_dataset_form') }}";
+            }
+        });
+    }
+    
+    // View data button
+    const viewDataBtn = document.getElementById('viewDataBtn');
+    if (viewDataBtn) {
+        viewDataBtn.addEventListener('click', function() {
+            const datasetPreview = document.getElementById('datasetPreview');
+            if (datasetPreview) {
+                datasetPreview.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+    
+    // Remove file button
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    if (removeFileBtn) {
+        removeFileBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to remove this file?')) {
+                window.location.href = "{{ url_for('clear_dataset_form') }}";
+            }
+        });
+    }
+    
+    // Format file size helper function
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Drag and drop functionality
+    const uploadContainer = document.getElementById('uploadContainer');
+    const browseButton = document.getElementById('browseButton');
+    const fileInput = document.getElementById('fileInput');
+    
+    if (uploadContainer) {
+        uploadContainer.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        uploadContainer.addEventListener('dragleave', function() {
+            this.classList.remove('dragover');
+        });
+        
+        uploadContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0 && !isHandlingFileInput) {
+                isHandlingFileInput = true;
+                fileInput.files = e.dataTransfer.files;
+                
+                // Trigger change event
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+                
+                // Reset flag after a short delay
+                setTimeout(() => {
+                    isHandlingFileInput = false;
+                }, 500);
+            }
+        });
+    }
+    
+    // ---- IMPORTANT: Handle "Browse Files" button click with a direct click handler ----
+    if (browseButton) {
+        browseButton.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent bubbling
+            
+            if (!isHandlingFileInput) {
+                isHandlingFileInput = true;
+                
+                // Directly click the file input
+                fileInput.click();
+                
+                // Reset flag after a short delay
+                setTimeout(() => {
+                    isHandlingFileInput = false;
+                }, 500);
+            }
+        });
+    }
+    
+    // ---- IMPORTANT: Remove other container click handlers that might trigger the file input ----
+    // We'll only use the direct button click and drag/drop functionality
+</script>
+{% endblock %}

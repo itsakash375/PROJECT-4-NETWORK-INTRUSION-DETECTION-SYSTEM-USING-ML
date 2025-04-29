@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preprocessing - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('live_capture') }}" class="nav-item">
+                <i class="fas fa-wifi"></i> Live Capture
+            </a>
+            <a href="{{ url_for('manual_entry') }}" class="nav-item">
+                <i class="fas fa-edit"></i> Manual Entry
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>{{ user.username }}</span>
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="main-section">
+        <!-- Page Header -->
+        <div class="row">
+            <div class="col">
+                <div class="page-header">
+                    <h2 class="page-title"><i class="fas fa-broom"></i> Data Preprocessing</h2>
+                    <div class="page-actions">
+                        <button class="btn primary-btn" id="applyPreprocessingBtn">
+                            <i class="fas fa-check"></i> Apply Preprocessing
+                        </button>
+                    </div>
+                </div>
+                
+                {% if message %}
+                <div class="message {{ message_type }}">
+                    <i class="fas fa-info-circle"></i> {{ message }}
+                </div>
+                {% endif %}
+
+                {% if not dataset_info %}
+                <div class="message warning">
+                    <i class="fas fa-exclamation-triangle"></i> No dataset available! Please upload a dataset first.
+                    <p><a href="{{ url_for('data_upload') }}" class="btn secondary-btn">
+                        <i class="fas fa-upload"></i> Go to Data Upload
+                    </a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if dataset_info %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <strong>Current Dataset: {{ dataset_info.fileName }}</strong>
+                <p>{{ dataset_info.totalRows }} rows, {{ dataset_info.totalColumns }} columns, {{ 'Labeled' if dataset_info.isLabeled else 'Unlabeled' }} data</p>
+            </div>
+        </div>
+        
+        <!-- Preprocessing tasks -->
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-tasks"></i> Preprocessing Tasks</h3>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('apply_preprocessing') }}" method="post">
+                            <div class="preprocessing-options">
+                                <!-- Missing values handling -->
+                                <div class="preprocessing-option">
+                                    <input type="checkbox" id="handleMissingValues" name="handleMissingValues" checked>
+                                    <label for="handleMissingValues">Handle Missing Values</label>
+                                    <div class="option-details" id="missingValuesDetails">
+                                        <select id="missingValueStrategy" name="missingValueStrategy" class="form-control">
+                                            <option value="mean">Replace with Mean (for numeric)</option>
+                                            <option value="median">Replace with Median (for numeric)</option>
+                                            <option value="mode">Replace with Mode (for categorical)</option>
+                                            <option value="drop">Drop rows with missing values</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Categorical encoding -->
+                                <div class="preprocessing-option">
+                                    <input type="checkbox" id="encodeCategorial" name="encodeCategorial" checked>
+                                    <label for="encodeCategorial">Encode Categorical Features</label>
+                                    <div class="option-details" id="encodingDetails">
+                                        <select id="encodingStrategy" name="encodingStrategy" class="form-control">
+                                            <option value="onehot">One-Hot Encoding</option>
+                                            <option value="label">Label Encoding</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Normalization/scaling -->
+                                <div class="preprocessing-option">
+                                    <input type="checkbox" id="normalizeFeatures" name="normalizeFeatures" checked>
+                                    <label for="normalizeFeatures">Normalize/Scale Features</label>
+                                    <div class="option-details" id="scalingDetails">
+                                        <select id="scalingStrategy" name="scalingStrategy" class="form-control">
+                                            <option value="minmax">Min-Max Scaling (0-1)</option>
+                                            <option value="standardize">Standardization (z-score)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Outlier removal -->
+                                <div class="preprocessing-option">
+                                    <input type="checkbox" id="removeOutliers" name="removeOutliers">
+                                    <label for="removeOutliers">Remove Outliers</label>
+                                    <div class="option-details" id="outlierDetails">
+                                        <select id="outlierStrategy" name="outlierStrategy" class="form-control">
+                                            <option value="iqr">IQR Method</option>
+                                            <option value="zscore">Z-Score Method</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Feature selection -->
+                                <div class="preprocessing-option">
+                                    <input type="checkbox" id="featureSelection" name="featureSelection">
+                                    <label for="featureSelection">Feature Selection</label>
+                                    <div class="option-details" id="featureSelectionDetails">
+                                        <select id="featureSelectionStrategy" name="featureSelectionStrategy" class="form-control">
+                                            <option value="correlation">Correlation-based</option>
+                                            <option value="variance">Variance Threshold</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Label handling -->
+                            {% if dataset_info.isLabeled %}
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-tag"></i> Label Handling</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="label-options">
+                                        <div class="label-info">
+                                            <h4>Dataset Type: <span id="datasetType">Labeled</span></h4>
+                                        </div>
+                                        
+                                        <div class="option-section">
+                                            <h4>Label Column</h4>
+                                            <div class="option-row">
+                                                <select id="labelColumn" name="labelColumn" class="form-control">
+                                                    {% for header in dataset_info.headers %}
+                                                    <option value="{{ header }}" {% if header == dataset_info.labelColumn %}selected{% endif %}>{{ header }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="option-section">
+                                            <h4>Conversion Options</h4>
+                                            <div class="option-row">
+                                                <input type="checkbox" id="removeLabels" name="removeLabels">
+                                                <label for="removeLabels">Remove labels (convert to unlabeled dataset)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button type="submit" class="btn primary-btn">
+                                    <i class="fas fa-check"></i> Apply Preprocessing
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preprocessing preview -->
+        {% if preprocessed_dataset_info %}
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-eye"></i> Preprocessing Preview</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="preview-tabs">
+                            <button class="preview-tab active" data-tab="original">Original Data</button>
+                            <button class="preview-tab" data-tab="preprocessed">Preprocessed Data</button>
+                        </div>
+                        <div class="preview-content">
+                            <div class="preview-tab-content active" id="original-tab">
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                {% for header in dataset_info.headers %}
+                                                <th>{{ header }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in dataset_info.sampleData %}
+                                            <tr>
+                                                {% for header in dataset_info.headers %}
+                                                <td>{{ row[header] }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="preview-tab-content" id="preprocessed-tab">
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                {% for header in preprocessed_dataset_info.headers %}
+                                                <th>{{ header }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in preprocessed_dataset_info.sampleData %}
+                                            <tr>
+                                                {% for header in preprocessed_dataset_info.headers %}
+                                                <td>{{ row[header] }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <script>
+        // Toggle option details visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            // For each checkbox, toggle its detail section
+            const checkboxes = [
+                'handleMissingValues',
+                'encodeCategorial',
+                'normalizeFeatures',
+                'removeOutliers',
+                'featureSelection'
+            ];
+            
+            checkboxes.forEach(function(id) {
+                const checkbox = document.getElementById(id);
+                const detailsId = id + 'Details';
+                const details = document.getElementById(detailsId) || document.querySelector(`[id$="${detailsId}"]`);
+                
+                if (checkbox && details) {
+                    // Set initial state
+                    details.style.display = checkbox.checked ? 'block' : 'none';
+                    
+                    // Add change listener
+                    checkbox.addEventListener('change', function() {
+                        details.style.display = this.checked ? 'block' : 'none';
+                    });
+                }
+            });
+            
+            // Tab switching for preview
+            const previewTabs = document.querySelectorAll('.preview-tab');
+            if (previewTabs.length > 0) {
+                previewTabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        // Remove active class from all tabs
+                        previewTabs.forEach(t => t.classList.remove('active'));
+                        
+                        // Add active class to clicked tab
+                        tab.classList.add('active');
+                        
+                        // Hide all tab contents
+                        const tabContents = document.querySelectorAll('.preview-tab-content');
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        
+                        // Show selected tab content
+                        const tabId = tab.dataset.tab + '-tab';
+                        document.getElementById(tabId).classList.add('active');
+                    });
+                });
+            }
+        });
+    </script>
+
+    <!-- JavaScript imports -->
+    <script src="{{ url_for('static', filename='config.js') }}"></script>
+    <script src="{{ url_for('static', filename='preprocessing.js') }}"></script>
+    <script src="/static/model_status_fix.js"></script>
+</body>
+</html>

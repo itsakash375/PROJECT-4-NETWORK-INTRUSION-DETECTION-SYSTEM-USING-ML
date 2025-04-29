@@ -1,0 +1,1 @@
+[{"username": "admin", "password": "pbkdf2:sha256:260000$nZ0H1v3rO99XUzQ2$5538e3fe79c1a453f88fcddd027b576cb244eec4e172ae3ce74e4a53de952011", "email": "admin@example.com"}, {"username": "user", "password": "pbkdf2:sha256:260000$hOIguzvwZBLrulx1$a51c2428d37b0658ff463a89bb8864c882401d93386a6afd87fc3bf6868a81b4", "email": "user@example.com"}]

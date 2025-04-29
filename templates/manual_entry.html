@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Entry - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('live_capture') }}" class="nav-item">
+                <i class="fas fa-wifi"></i> Live Capture
+            </a>
+            <a href="{{ url_for('manual_entry') }}" class="nav-item">
+                <i class="fas fa-edit"></i> Manual Entry
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>{{ user.username }}</span>
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="main-section">
+        <!-- Page Header -->
+        <div class="row">
+            <div class="col">
+                <div class="page-header">
+                    <h2 class="page-title"><i class="fas fa-edit"></i> Manual Network Parameter Entry</h2>
+                </div>
+                
+                {% if message %}
+                <div class="message {{ message_type }}">
+                    <i class="fas fa-info-circle"></i> {{ message }}
+                </div>
+                {% endif %}
+
+                {% if not models_available %}
+                <div class="message warning">
+                    <i class="fas fa-exclamation-triangle"></i> No trained models available for analysis! Please train at least one unsupervised model first.
+                    <p><a href="{{ url_for('model_training') }}" class="btn secondary-btn">
+                        <i class="fas fa-brain"></i> Go to Model Training
+                    </a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if models_available %}
+        <div class="row">
+            <div class="col">
+                <!-- Manual Entry Form -->
+                <div class="entry-form">
+                    <h3><i class="fas fa-sliders-h"></i> Network Traffic Parameters</h3>
+                    <p>Enter network traffic parameters manually to analyze potential intrusions.</p>
+                    
+                    <form id="manualEntryForm" action="{{ url_for('analyze_manual_entry') }}" method="post">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="srcIP">Source IP Address:</label>
+                                <input type="text" id="srcIP" name="srcIP" class="form-control" placeholder="192.168.1.100" value="{{ form_data.srcIP if form_data }}">
+                                <div class="tooltip">
+                                    <i class="fas fa-question-circle"></i>
+                                    <span class="tooltiptext">IP address where the traffic originated</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dstIP">Destination IP Address:</label>
+                                <input type="text" id="dstIP" name="dstIP" class="form-control" placeholder="10.0.0.1" value="{{ form_data.dstIP if form_data }}">
+                                <div class="tooltip">
+                                    <i class="fas fa-question-circle"></i>
+                                    <span class="tooltiptext">IP address where the traffic is headed</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="srcPort">Source Port:</label>
+                                <input type="number" id="srcPort" name="srcPort" class="form-control" placeholder="45678" min="0" max="65535" value="{{ form_data.srcPort if form_data }}">
+                                <div class="tooltip">
+                                    <i class="fas fa-question-circle"></i>
+                                    <span class="tooltiptext">Port number from origin (1-65535)</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dstPort">Destination Port:</label>
+                                <input type="number" id="dstPort" name="dstPort" class="form-control" placeholder="80" min="0" max="65535" value="{{ form_data.dstPort if form_data }}">
+                                <div class="tooltip">
+                                    <i class="fas fa-question-circle"></i>
+                                    <span class="tooltiptext">Port number of destination (1-65535)</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="protocol">Protocol:</label>
+                                <select id="protocol" name="protocol" class="form-control">
+                                    <option value="TCP" {% if form_data and form_data.protocol == 'TCP' %}selected{% endif %}>TCP</option>
+                                    <option value="UDP" {% if form_data and form_data.protocol == 'UDP' %}selected{% endif %}>UDP</option>
+                                    <option value="ICMP" {% if form_data and form_data.protocol == 'ICMP' %}selected{% endif %}>ICMP</option>
+                                    <option value="HTTP" {% if form_data and form_data.protocol == 'HTTP' %}selected{% endif %}>HTTP</option>
+                                    <option value="HTTPS" {% if form_data and form_data.protocol == 'HTTPS' %}selected{% endif %}>HTTPS</option>
+                                    <option value="DNS" {% if form_data and form_data.protocol == 'DNS' %}selected{% endif %}>DNS</option>
+                                    <option value="FTP" {% if form_data and form_data.protocol == 'FTP' %}selected{% endif %}>FTP</option>
+                                    <option value="SSH" {% if form_data and form_data.protocol == 'SSH' %}selected{% endif %}>SSH</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="packetSize">Packet Size (bytes):</label>
+                                <input type="number" id="packetSize" name="packetSize" class="form-control" placeholder="1024" min="20" max="65535" value="{{ form_data.packetSize if form_data }}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="packetCount">Packet Count:</label>
+                                <input type="number" id="packetCount" name="packetCount" class="form-control" placeholder="100" min="1" max="10000" value="{{ form_data.packetCount if form_data }}">
+                                <div class="tooltip">
+                                    <i class="fas fa-question-circle"></i>
+                                    <span class="tooltiptext">Number of packets in this session</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="duration">Duration (seconds):</label>
+                                <input type="number" id="duration" name="duration" class="form-control" placeholder="30" min="1" max="3600" value="{{ form_data.duration if form_data }}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bytesPerSecond">Bytes Per Second:</label>
+                                <input type="number" id="bytesPerSecond" name="bytesPerSecond" class="form-control" placeholder="5000" min="1" value="{{ form_data.bytesPerSecond if form_data }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="packetsPerSecond">Packets Per Second:</label>
+                                <input type="number" id="packetsPerSecond" name="packetsPerSecond" class="form-control" placeholder="10" min="1" value="{{ form_data.packetsPerSecond if form_data }}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="flags">TCP Flags:</label>
+                                <select id="flags" name="flags" class="form-control">
+                                    <option value="ACK" {% if form_data and form_data.flags == 'ACK' %}selected{% endif %}>ACK</option>
+                                    <option value="SYN" {% if form_data and form_data.flags == 'SYN' %}selected{% endif %}>SYN</option>
+                                    <option value="FIN" {% if form_data and form_data.flags == 'FIN' %}selected{% endif %}>FIN</option>
+                                    <option value="RST" {% if form_data and form_data.flags == 'RST' %}selected{% endif %}>RST</option>
+                                    <option value="PSH" {% if form_data and form_data.flags == 'PSH' %}selected{% endif %}>PSH</option>
+                                    <option value="URG" {% if form_data and form_data.flags == 'URG' %}selected{% endif %}>URG</option>
+                                    <option value="SYN-ACK" {% if form_data and form_data.flags == 'SYN-ACK' %}selected{% endif %}>SYN-ACK</option>
+                                    <option value="FIN-ACK" {% if form_data and form_data.flags == 'FIN-ACK' %}selected{% endif %}>FIN-ACK</option>
+                                    <option value="N/A" {% if form_data and form_data.flags == 'N/A' %}selected{% endif %}>N/A (Not TCP)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="windowSize">TCP Window Size:</label>
+                                <input type="number" id="windowSize" name="windowSize" class="form-control" placeholder="65535" min="0" value="{{ form_data.windowSize if form_data }}">
+                            </div>
+                        </div>
+                        
+                        <div class="model-selection">
+                            <h4>Select Models for Analysis:</h4>
+                            <div id="modelList">
+                                {% if unsupervised_models %}
+                                    {% for model_name in unsupervised_models %}
+                                    <div class="model-checkbox">
+                                        <input type="checkbox" id="model_{{ model_name }}" name="selectedModels" value="{{ model_name }}" {% if model_name == best_model %}checked{% endif %}>
+                                        <label for="model_{{ model_name }}">{{ model_name }}</label>
+                                        {% if model_name == best_model %}<span class="best-model-badge">BEST MODEL</span>{% endif %}
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p>No unsupervised models available. Please train models first.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn primary-btn">
+                                <i class="fas fa-search"></i> Analyze Traffic
+                            </button>
+                            <button type="button" id="clearFormBtn" class="btn secondary-btn">
+                                <i class="fas fa-eraser"></i> Clear Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Analysis Result (shown after form submission) -->
+                {% if analysis_result %}
+                <div class="analysis-result">
+                    <h3>Traffic Analysis Result</h3>
+                    
+                    {% if analysis_result.isAnomaly %}
+                    <div class="result-status status-anomaly">
+                        <i class="fas fa-exclamation-triangle network-status-icon"></i>ANOMALY DETECTED
+                    </div>
+                    <p>The analyzed traffic parameters indicate potential abnormal activity.</p>
+                    {% else %}
+                    <div class="result-status status-normal">
+                        <i class="fas fa-check-circle network-status-icon"></i>NORMAL TRAFFIC
+                    </div>
+                    <p>The analyzed traffic parameters appear to be normal.</p>
+                    {% endif %}
+                    
+                    <div class="result-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Anomaly Score:</span>
+                            <span>{{ analysis_result.anomalyScore|round(4) }} ({{ analysis_result.anomalyScore * 100|round(1) }}%)</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Confidence:</span>
+                            <span>{{ analysis_result.confidence * 100|round(1) }}%</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Analyzed By:</span>
+                            <span>{{ analysis_result.modelName }}</span>
+                        </div>
+                        
+                        {% if analysis_result.isAnomaly and analysis_result.attackTypes|length > 0 %}
+                        <h4 style="margin-top: 20px;">Detected Attack Types:</h4>
+                        {% for attack in analysis_result.attackTypes %}
+                        <div class="attack-card">
+                            <div class="attack-header">
+                                <div class="attack-name">
+                                    <i class="fas fa-exclamation-triangle"></i> {{ attack.type }}
+                                </div>
+                                <div class="attack-confidence">
+                                    Confidence: {{ attack.confidence * 100|round(1) }}%
+                                </div>
+                            </div>
+                            <div class="attack-description">
+                                {{ attack.description }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <a href="{{ url_for('results') }}" class="btn secondary-btn">
+                            <i class="fas fa-chart-bar"></i> View Detailed Results
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Sample Templates -->
+                <div class="templates-section">
+                    <div class="templates-heading">
+                        <h3><i class="fas fa-copy"></i> Sample Traffic Templates</h3>
+                        <p>Click on any template to load example values</p>
+                    </div>
+                    
+                    <div class="templates-grid">
+                        <div class="template-card" onclick="loadTemplate('normal_web_browsing')">
+                            <div class="template-title">
+                                <i class="fas fa-globe"></i> Normal Web Browsing
+                                <span class="normal-tag">NORMAL</span>
+                            </div>
+                            <div class="template-description">
+                                Typical HTTP/HTTPS traffic to a web server
+                            </div>
+                        </div>
+                        
+                        <div class="template-card" onclick="loadTemplate('ssh_session')">
+                            <div class="template-title">
+                                <i class="fas fa-terminal"></i> SSH Session
+                                <span class="normal-tag">NORMAL</span>
+                            </div>
+                            <div class="template-description">
+                                Secure Shell connection to a remote server
+                            </div>
+                        </div>
+                        
+                        <div class="template-card" onclick="loadTemplate('dns_query')">
+                            <div class="template-title">
+                                <i class="fas fa-server"></i> DNS Query
+                                <span class="normal-tag">NORMAL</span>
+                            </div>
+                            <div class="template-description">
+                                Domain name resolution request
+                            </div>
+                        </div>
+                        
+                        <div class="template-card" onclick="loadTemplate('port_scan')">
+                            <div class="template-title">
+                                <i class="fas fa-search"></i> Port Scanning
+                                <span class="anomaly-tag">ANOMALY</span>
+                            </div>
+                            <div class="template-description">
+                                Multiple connections to different ports on a single host
+                            </div>
+                        </div>
+                        
+                        <div class="template-card" onclick="loadTemplate('ddos_attack')">
+                            <div class="template-title">
+                                <i class="fas fa-bomb"></i> DDoS Attack
+                                <span class="anomaly-tag">ANOMALY</span>
+                            </div>
+                            <div class="template-description">
+                                High-volume traffic to a single destination
+                            </div>
+                        </div>
+                        
+                        <div class="template-card" onclick="loadTemplate('brute_force')">
+                            <div class="template-title">
+                                <i class="fas fa-key"></i> Brute Force Attack
+                                <span class="anomaly-tag">ANOMALY</span>
+                            </div>
+                            <div class="template-description">
+                                Repeated connection attempts to a specific service
+                            </div>
+                        </div>
+                        
+                        <div class="template-card" onclick="loadTemplate('data_exfiltration')">
+                            <div class="template-title">
+                                <i class="fas fa-cloud-upload-alt"></i> Data Exfiltration
+                                <span class="anomaly-tag">ANOMALY</span>
+                            </div>
+                            <div class="template-description">
+                                Unusual large outbound data transfer
+                            </div>
+                        </div>
+                        
+                        <div class="template-card" onclick="loadTemplate('sql_injection')">
+                            <div class="template-title">
+                                <i class="fas fa-database"></i> SQL Injection
+                                <span class="anomaly-tag">ANOMALY</span>
+                            </div>
+                            <div class="template-description">
+                                Web attack targeting database vulnerabilities
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize form handling
+            const manualEntryForm = document.getElementById('manualEntryForm');
+            const clearFormBtn = document.getElementById('clearFormBtn');
+            
+            // Clear form button
+            if (clearFormBtn) {
+                clearFormBtn.addEventListener('click', function() {
+                    manualEntryForm.reset();
+                });
+            }
+            
+            // Form validation before submit
+            if (manualEntryForm) {
+                manualEntryForm.addEventListener('submit', function(e) {
+                    // Ensure at least one model is selected
+                    const selectedModels = document.querySelectorAll('input[name="selectedModels"]:checked');
+                    if (selectedModels.length === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one model for analysis.');
+                        return false;
+                    }
+                    
+                    // Basic validation for required fields
+                    const srcIP = document.getElementById('srcIP').value;
+                    const dstIP = document.getElementById('dstIP').value;
+                    
+                    if (!srcIP || !dstIP) {
+                        e.preventDefault();
+                        alert('Source and Destination IP addresses are required.');
+                        return false;
+                    }
+                    
+                    // IP address format validation
+                    const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+                    if (!ipRegex.test(srcIP) || !ipRegex.test(dstIP)) {
+                        e.preventDefault();
+                        alert('Please enter valid IP addresses (format: xxx.xxx.xxx.xxx)');
+                        return false;
+                    }
+                    
+                    return true;
+                });
+            }
+        });
+        
+        // Sample traffic templates
+        function loadTemplate(templateName) {
+            // Define templates
+            const templates = {
+                normal_web_browsing: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '93.184.216.34',
+                    srcPort: '49152',
+                    dstPort: '443',
+                    protocol: 'HTTPS',
+                    packetSize: '1460',
+                    packetCount: '120',
+                    duration: '30',
+                    bytesPerSecond: '5800',
+                    packetsPerSecond: '4',
+                    flags: 'ACK',
+                    windowSize: '65535'
+                },
+                ssh_session: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '10.0.0.50',
+                    srcPort: '54321',
+                    dstPort: '22',
+                    protocol: 'TCP',
+                    packetSize: '256',
+                    packetCount: '500',
+                    duration: '300',
+                    bytesPerSecond: '420',
+                    packetsPerSecond: '1.7',
+                    flags: 'ACK',
+                    windowSize: '4096'
+                },
+                dns_query: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '8.8.8.8',
+                    srcPort: '53124',
+                    dstPort: '53',
+                    protocol: 'UDP',
+                    packetSize: '64',
+                    packetCount: '2',
+                    duration: '0.5',
+                    bytesPerSecond: '128',
+                    packetsPerSecond: '4',
+                    flags: 'N/A',
+                    windowSize: '0'
+                },
+                port_scan: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '10.0.0.1',
+                    srcPort: '50123',
+                    dstPort: '1',
+                    protocol: 'TCP',
+                    packetSize: '64',
+                    packetCount: '1000',
+                    duration: '10',
+                    bytesPerSecond: '6400',
+                    packetsPerSecond: '100',
+                    flags: 'SYN',
+                    windowSize: '1024'
+                },
+                ddos_attack: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '10.0.0.1',
+                    srcPort: '33333',
+                    dstPort: '80',
+                    protocol: 'TCP',
+                    packetSize: '1500',
+                    packetCount: '100000',
+                    duration: '60',
+                    bytesPerSecond: '2500000',
+                    packetsPerSecond: '1667',
+                    flags: 'SYN',
+                    windowSize: '16384'
+                },
+                brute_force: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '10.0.0.50',
+                    srcPort: '49999',
+                    dstPort: '22',
+                    protocol: 'TCP',
+                    packetSize: '128',
+                    packetCount: '600',
+                    duration: '30',
+                    bytesPerSecond: '2560',
+                    packetsPerSecond: '20',
+                    flags: 'SYN',
+                    windowSize: '8192'
+                },
+                data_exfiltration: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '203.0.113.100',
+                    srcPort: '54321',
+                    dstPort: '443',
+                    protocol: 'TCP',
+                    packetSize: '1500',
+                    packetCount: '5000',
+                    duration: '120',
+                    bytesPerSecond: '62500',
+                    packetsPerSecond: '42',
+                    flags: 'ACK',
+                    windowSize: '65535'
+                },
+                sql_injection: {
+                    srcIP: '192.168.1.100',
+                    dstIP: '203.0.113.50',
+                    srcPort: '54321',
+                    dstPort: '80',
+                    protocol: 'HTTP',
+                    packetSize: '2048',
+                    packetCount: '10',
+                    duration: '2',
+                    bytesPerSecond: '10240',
+                    packetsPerSecond: '5',
+                    flags: 'ACK',
+                    windowSize: '32768'
+                }
+            };
+            
+            // Get the template data
+            const template = templates[templateName];
+            if (!template) {
+                console.error('Template not found:', templateName);
+                return;
+            }
+            
+            // Fill the form fields
+            document.getElementById('srcIP').value = template.srcIP;
+            document.getElementById('dstIP').value = template.dstIP;
+            document.getElementById('srcPort').value = template.srcPort;
+            document.getElementById('dstPort').value = template.dstPort;
+            document.getElementById('protocol').value = template.protocol;
+            document.getElementById('packetSize').value = template.packetSize;
+            document.getElementById('packetCount').value = template.packetCount;
+            document.getElementById('duration').value = template.duration;
+            document.getElementById('bytesPerSecond').value = template.bytesPerSecond;
+            document.getElementById('packetsPerSecond').value = template.packetsPerSecond;
+            document.getElementById('flags').value = template.flags;
+            document.getElementById('windowSize').value = template.windowSize;
+        }
+    </script>
+    <script>
+        // Function to save training status to session storage after successful training
+        function saveTrainingStatus(results) {
+            if (!results) return;
+            
+            try {
+                // Save the full results
+                sessionStorage.setItem('trainingResults', JSON.stringify(results));
+                
+                // Also save a flag indicating models are trained
+                const hasSupervised = results && Object.keys(results.supervisedModels || {}).length > 0;
+                const hasUnsupervised = results && Object.keys(results.unsupervisedModels || {}).length > 0;
+                
+                sessionStorage.setItem('modelsTrainedStatus', JSON.stringify({
+                    supervisedTrained: hasSupervised,
+                    unsupervisedTrained: hasUnsupervised,
+                    timestamp: new Date().toISOString()
+                }));
+                
+                console.log("Saved training status to session storage");
+            } catch (e) {
+                console.error("Error saving training status:", e);
+            }
+        }
+        
+        // Function to check if models exist in training_results.json
+        function checkTrainingResultsFile() {
+            fetch('/api/training-results', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.trainingResults) {
+                    console.log("Found training results in server");
+                    saveTrainingStatus(data.trainingResults);
+                    
+                    // Reload the page to reflect the new status
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error("Error checking training results file:", error);
+            });
+        }
+        
+        // Check if the page needs to be reloaded with model status
+        document.addEventListener('DOMContentLoaded', function() {
+            // If we're showing a "no models" message but have models in session storage
+            const noModelsMsg = document.querySelector('.message.warning');
+            const storedResults = sessionStorage.getItem('trainingResults');
+            
+            if (noModelsMsg && storedResults) {
+                try {
+                    const results = JSON.parse(storedResults);
+                    const hasModels = (results && 
+                        ((results.supervisedModels && Object.keys(results.supervisedModels).length > 0) || 
+                        (results.unsupervisedModels && Object.keys(results.unsupervisedModels).length > 0)));
+                        
+                    if (hasModels) {
+                        console.log("Found models in session storage but page shows none - reloading");
+                        window.location.reload();
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Error parsing stored results:", e);
+                }
+            }
+            
+            // If we don't have results in session storage, check the server
+            if ((!storedResults || storedResults === "null" || storedResults === "undefined") && noModelsMsg) {
+                console.log("No results in session storage, checking server");
+                checkTrainingResultsFile();
+            }
+        });
+        </script>
+</body>
+</html>

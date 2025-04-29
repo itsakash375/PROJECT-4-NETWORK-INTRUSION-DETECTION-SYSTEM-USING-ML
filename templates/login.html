@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4776e6;
+            --primary-dark: #3a64c8;
+            --primary-light: #6f94ff;
+            --secondary-color: #2b3a67;
+            --secondary-dark: #1c2a57;
+            --secondary-light: #3b4a77;
+            --accent-color: #8e54e9;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --card-bg: #ffffff;
+            --primary-gradient: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 10px;
+            --border-radius-lg: 15px;
+            --transition: all 0.25s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .auth-card {
+            width: 100%;
+            max-width: 450px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .auth-header {
+            padding: 35px 30px;
+            text-align: center;
+        }
+        
+        .auth-header h1 {
+            color: var(--secondary-color);
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        
+        .auth-header p {
+            color: var(--text-secondary);
+            margin-bottom: 0;
+            font-size: 16px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            padding: 30px;
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 18px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 30px;
+            font-size: 15px;
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(71, 118, 230, 0.2);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 25px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+            margin-top: 10px;
+        }
+        
+        .primary-btn {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(71, 118, 230, 0.3);
+        }
+        
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(71, 118, 230, 0.4);
+        }
+        
+        .message {
+            padding: 15px 20px;
+            margin: 0 30px 20px;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+        }
+        
+        .error {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid #e74c3c;
+            color: #c0392b;
+        }
+        
+        .success {
+            background-color: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid #2ecc71;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Network Intrusion Detection System</h1>
+            <p>Advanced Security Analytics Platform</p>
+        </div>
+        
+        {% if message %}
+            <div class="message {{ message_type }}">
+                {{ message }}
+            </div>
+        {% endif %}
+        
+        <div class="tabs">
+            <button class="tab-btn active">Login</button>
+            <a href="{{ url_for('register_page') }}" class="tab-btn">Register</a>
+        </div>
+        
+        <div class="tab-content">
+            <form action="{{ url_for('login_submit') }}" method="post">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" name="username" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn primary-btn">Login</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

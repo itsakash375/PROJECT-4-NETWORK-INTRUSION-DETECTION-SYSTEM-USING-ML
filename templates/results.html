@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Results - Network Intrusion Detection System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4776e6;
+            --primary-light: #6f94ff;
+            --secondary-color: #2b3a67;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --primary-gradient: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
+            --secondary-gradient: linear-gradient(135deg, #2b3a67 0%, #4776e6 100%);
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 10px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Navigation bar */
+        .nav-bar {
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .nav-brand {
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-items {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .nav-item {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 30px;
+        }
+        
+        /* Page header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 28px;
+            margin: 0;
+            color: var(--secondary-color);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .primary-btn {
+            background: var(--primary-gradient);
+            color: white;
+        }
+        
+        .secondary-btn {
+            background: white;
+            color: var(--secondary-color);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(43, 58, 103, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            position: relative;
+            padding-left: 15px;
+        }
+        
+        .card-title:before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        /* Status indicator */
+        .status-indicator {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-indicator:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+        
+        .status-indicator.danger:before {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        .status-indicator i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            color: var(--danger-color);
+        }
+        
+        .status-indicator.success i {
+            color: var(--success-color);
+        }
+        
+        .status-indicator h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: var(--danger-color);
+        }
+        
+        .status-indicator.success h3 {
+            color: var(--success-color);
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            margin-top: 40px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 50px;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .tab-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(71, 118, 230, 0.3);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Metrics table */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .metrics-table th, .metrics-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .metrics-table th {
+            background: #f5f7fa;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .metrics-table tr:hover {
+            background-color: rgba(71, 118, 230, 0.05);
+        }
+        
+        .metrics-table tr.best-model {
+            background: rgba(46, 204, 113, 0.1);
+        }
+        
+        .best-model-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 30px;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+        
+        /* Visualizations */
+        .visualizations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .visualization-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .visualization-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .visualization-header {
+            padding: 15px 20px;
+            background: #f5f7fa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .visualization-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        
+        .visualization-body {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .visualization-body img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        
+        .viz-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            gap: 15px;
+            color: var(--text-secondary);
+        }
+        
+        .viz-placeholder i {
+            font-size: 40px;
+            color: #ddd;
+        }
+        
+        /* Confidence meter */
+        .confidence-meter {
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .confidence-bar {
+            height: 16px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .confidence-value {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            border-radius: 8px;
+        }
+        
+        .confidence-value.success {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .alert i {
+            font-size: 22px;
+            margin-top: 2px;
+        }
+        
+        .alert-warning {
+            background: rgba(243, 156, 18, 0.1);
+            border-left: 4px solid #f39c12;
+            color: #d35400;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .nav-bar {
+                flex-direction: column;
+                padding: 15px;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .visualizations-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> NIDS Dashboard
+        </div>
+        
+        <div class="nav-items">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{{ url_for('data_upload') }}" class="nav-item">
+                <i class="fas fa-upload"></i> Upload Data
+            </a>
+            <a href="{{ url_for('preprocessing') }}" class="nav-item">
+                <i class="fas fa-broom"></i> Preprocessing
+            </a>
+            <a href="{{ url_for('model_training') }}" class="nav-item">
+                <i class="fas fa-brain"></i> Models
+            </a>
+            <a href="{{ url_for('results') }}" class="nav-item active">
+                <i class="fas fa-chart-bar"></i> Results
+            </a>
+            <a href="{{ url_for('live_capture') }}" class="nav-item">
+                <i class="fas fa-network-wired"></i> Live Capture
+            </a>
+            <a href="{{ url_for('manual_entry') }}" class="nav-item">
+                <i class="fas fa-edit"></i> Manual Entry
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <span>User</span>
+            <a href="{{ url_for('logout_page') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title"><i class="fas fa-chart-bar"></i> Analysis Results</h2>
+            <div class="page-actions">
+                <form action="{{ url_for('generate_report_form') }}" method="post">
+                    <button type="submit" class="btn primary-btn" id="generateReportBtn">
+                        <i class="fas fa-file-pdf"></i> Generate Report
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        
+        <!-- Network Traffic Analysis Result -->
+        <div class="status-indicator {{ 'danger' if network_status == 'anomaly' else 'success' }}">
+            <i class="fas {{ 'fa-exclamation-triangle' if network_status == 'anomaly' else 'fa-check-circle' }}"></i>
+            <h3>{{ 'ANOMALY DETECTED' if network_status == 'anomaly' else 'NORMAL TRAFFIC' }}</h3>
+            
+            <p style="max-width: 800px; margin: 0 auto 20px; color: var(--text-secondary);">
+                {% if network_status == 'anomaly' %}
+                The analysis detected abnormal patterns in the network traffic. Potential intrusion or malicious
+                activities have been identified. Further investigation is recommended.
+                {% else %}
+                The analysis did not detect any abnormal patterns in the network traffic. 
+                No signs of intrusion or malicious activities have been identified.
+                {% endif %}
+            </p>
+            
+            <div class="confidence-meter">
+                <div class="confidence-label">
+                    <span>Confidence:</span>
+                    <span>{{ network_confidence }}%</span>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-value {{ 'danger' if network_status == 'anomaly' else 'success' }}" style="width: {{ network_confidence }}%"></div>
+                </div>
+            </div>
+            
+            {% if best_model_name %}
+            <p style="margin-top: 20px; color: var(--text-secondary); font-style: italic;">
+                Detected by: {{ best_model_name }} ({{ best_model_type }})
+            </p>
+            {% endif %}
+        </div>
+        
+        <!-- Tabs for Model Results -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="supervised">
+                    <i class="fas fa-tag"></i> Supervised Models
+                </button>
+                <button class="tab-btn" data-tab="unsupervised">
+                    <i class="fas fa-project-diagram"></i> Unsupervised Models
+                </button>
+            </div>
+            
+            <!-- Supervised models tab -->
+            <div class="tab-content active" id="supervised-tab">
+                {% if training_results and training_results.get('supervisedModels') %}
+                <!-- Supervised Models Performance Metrics -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Models Performance Comparison</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Accuracy</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1</th>
+                                    <th>AUC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for model_name, model_data in training_results.get('supervisedModels', {}).items() %}
+                                <tr {% if model_name == best_supervised_model %}class="best-model"{% endif %}>
+                                    <td>{{ model_name }} {% if model_name == best_supervised_model %}<span class="best-model-badge">BEST MODEL</span>{% endif %}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('Accuracy', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('Precision', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('Recall', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('F1', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('AUC-ROC', 0)) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Confusion Matrices -->
+                <div class="card" style="margin-top: 30px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Confusion Matrices</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="visualizations-grid">
+                            {% for model_name, model_data in training_results.get('supervisedModels', {}).items() %}
+                            <div class="visualization-card">
+                                <div class="visualization-header">
+                                    <h4 class="visualization-title">
+                                        {{ model_name }}
+                                        {% if model_name == best_supervised_model %}
+                                        <span class="best-model-badge">BEST MODEL</span>
+                                        {% endif %}
+                                    </h4>
+                                </div>
+                                <div class="visualization-body">
+                                    {% if model_data.get('results', {}).get('confusion_matrix_image') %}
+                                    <img src="data:image/png;base64,{{ model_data.get('results', {}).get('confusion_matrix_image') }}" alt="Confusion Matrix for {{ model_name }}">
+                                    {% else %}
+                                    <div class="viz-placeholder">
+                                        <i class="fas fa-chart-pie"></i>
+                                        <p>Confusion matrix not generated</p>
+                                        <form action="{{ url_for('get_confusion_matrix_form', model_name=model_name) }}" method="post">
+                                            <button type="submit" class="btn secondary-btn">
+                                                <i class="fas fa-eye"></i> View Confusion Matrix
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Learning Curves -->
+                <div class="card" style="margin-top: 30px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Learning Curves</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="visualizations-grid">
+                            {% for model_name, model_data in training_results.get('supervisedModels', {}).items() %}
+                            <div class="visualization-card">
+                                <div class="visualization-header">
+                                    <h4 class="visualization-title">
+                                        {{ model_name }}
+                                        {% if model_name == best_supervised_model %}
+                                        <span class="best-model-badge">BEST MODEL</span>
+                                        {% endif %}
+                                    </h4>
+                                </div>
+                                <div class="visualization-body">
+                                    {% if model_data.get('results', {}).get('learning_curve_image') %}
+                                    <img src="data:image/png;base64,{{ model_data.get('results', {}).get('learning_curve_image') }}" alt="Learning Curve for {{ model_name }}">
+                                    {% else %}
+                                    <div class="viz-placeholder">
+                                        <i class="fas fa-chart-line"></i>
+                                        <p>Learning curve not generated</p>
+                                        <form action="{{ url_for('get_learning_curve_form', model_name=model_name) }}" method="post">
+                                            <button type="submit" class="btn secondary-btn">
+                                                <i class="fas fa-chart-line"></i> View Learning Curve
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>No supervised models were trained!</strong>
+                        <p>Please train supervised models to view their results.</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="{{ url_for('model_training') }}" class="btn primary-btn">
+                        <i class="fas fa-brain"></i> Train Supervised Models
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Unsupervised models tab -->
+            <div class="tab-content" id="unsupervised-tab">
+                {% if training_results and training_results.get('unsupervisedModels') %}
+                <!-- Unsupervised Models Performance Metrics -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Models Performance Comparison</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Silhouette</th>
+                                    <th>Davies-Bouldin</th>
+                                    <th>Calinski-Harabasz</th>
+                                    <th>Homogeneity</th>
+                                    <th>Completeness</th>
+                                    <th>Anomaly Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for model_name, model_data in training_results.get('unsupervisedModels', {}).items() %}
+                                <tr {% if model_name == best_unsupervised_model %}class="best-model"{% endif %}>
+                                    <td>{{ model_name }} {% if model_name == best_unsupervised_model %}<span class="best-model-badge">BEST MODEL</span>{% endif %}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('Silhouette', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('DaviesBouldin', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('CalinskiHarabasz', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('Homogeneity', 0)) }}</td>
+                                    <td>{{ "%.4f"|format(model_data.get('results', {}).get('metrics', {}).get('Completeness', 0)) }}</td>
+                                    <td>{{ "%.2f%%"|format(model_data.get('results', {}).get('anomaly_ratio', 0) * 100) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Cluster Distributions -->
+                <div class="card" style="margin-top: 30px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Cluster Distributions</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="visualizations-grid">
+                            {% for model_name, model_data in training_results.get('unsupervisedModels', {}).items() %}
+                            <div class="visualization-card">
+                                <div class="visualization-header">
+                                    <h4 class="visualization-title">
+                                        {{ model_name }}
+                                        {% if model_name == best_unsupervised_model %}
+                                        <span class="best-model-badge">BEST MODEL</span>
+                                        {% endif %}
+                                    </h4>
+                                </div>
+                                <div class="visualization-body">
+                                    {% if model_data.get('results', {}).get('cluster_distribution_image') %}
+                                    <img src="data:image/png;base64,{{ model_data.get('results', {}).get('cluster_distribution_image') }}" alt="Cluster Distribution for {{ model_name }}">
+                                    {% else %}
+                                    <div class="viz-placeholder">
+                                        <i class="fas fa-chart-pie"></i>
+                                        <p>Cluster distribution not generated</p>
+                                        <form action="{{ url_for('get_cluster_distribution_form', model_name=model_name) }}" method="post">
+                                            <button type="submit" class="btn secondary-btn">
+                                                <i class="fas fa-chart-pie"></i> View Cluster Distribution
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>No unsupervised models were trained!</strong>
+                        <p>Please train unsupervised models to view their results.</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="{{ url_for('model_training') }}" class="btn primary-btn">
+                        <i class="fas fa-brain"></i> Train Unsupervised Models
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabBtns.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                btn.classList.add('active');
+                
+                // Hide all tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show selected tab content
+                document.getElementById(`${btn.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+        
+        // For any image that fails to load, show a placeholder
+        document.querySelectorAll('img').forEach(img => {
+            img.addEventListener('error', function() {
+                const parent = this.parentElement;
+                
+                // Create a placeholder div
+                const placeholder = document.createElement('div');
+                placeholder.className = 'viz-placeholder';
+                placeholder.innerHTML = `
+                    <i class="fas fa-image"></i>
+                    <p>Image failed to load</p>
+                `;
+                
+                // Replace the img with the placeholder
+                parent.replaceChild(placeholder, this);
+            });
+        });
+    });
+</script>
+<!-- Enhanced visualization scripts -->
+<script src="/static/visualization.js"></script>
+</body>
+</html>
